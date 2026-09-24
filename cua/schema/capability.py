@@ -210,6 +210,9 @@ class Interstitial(Strict):
     name: str
     detected_by: Condition
     dismiss: Step
+    resume_from: str | None = Field(
+        default=None, description="Main-step id to continue from after dismissing (default: retry the current step). "
+        "Needed when dismissing loses page state, e.g. the dialog replaces the results page.")
 
 
 class AuthFlow(Strict):
@@ -225,6 +228,7 @@ class VariantOverride(Strict):
     variant: str
     targets: dict[str, Target] = Field(default_factory=dict, description="step id -> replacement target")
     values: dict[str, ValueRef] = Field(default_factory=dict, description="step id -> replacement value (e.g. route)")
+    posts: dict[str, list[Condition]] = Field(default_factory=dict, description="step id -> replacement checkpoints")
     skip_steps: list[str] = Field(default_factory=list)
     outcome_detectors: dict[str, Condition] = Field(default_factory=dict, description="outcome code -> condition")
     success: Condition | None = None
@@ -278,6 +282,9 @@ class Capability(Strict):
         if len(params) != len(self.inputs) or len(outs) != len(self.outputs):
             raise ValueError("input/output names must be unique")
 
+        for it in self.interstitials:
+            if it.resume_from and it.resume_from not in {s.id for s in self.steps}:
+                raise ValueError(f"interstitial '{it.name}': unknown resume_from '{it.resume_from}'")
         codes = [o.code for o in self.outcomes]
         if len(codes) != len(set(codes)):
             raise ValueError("outcome codes must be unique")
@@ -299,7 +306,7 @@ class Capability(Strict):
                 raise ValueError(f"placeholder {{{{{m}}}}} does not match a declared input")
 
         for v in self.variants:
-            for sid in [*v.targets, *v.values, *v.skip_steps]:
+            for sid in [*v.targets, *v.values, *v.posts, *v.skip_steps]:
                 if sid not in main_ids:
                     raise ValueError(f"variant '{v.variant}': unknown step '{sid}'")
             for code in v.outcome_detectors:
@@ -335,6 +342,8 @@ def resolve_variant(cap: Capability, variant: str) -> Capability:
             upd["target"] = ov.targets[s.id]
         if s.id in ov.values:
             upd["value"] = ov.values[s.id]
+        if s.id in ov.posts:
+            upd["post"] = ov.posts[s.id]
         steps.append(s.model_copy(update=upd))
     outcomes = [o.model_copy(update={"detected_by": ov.outcome_detectors[o.code]}) if o.code in ov.outcome_detectors
                 else o for o in data.outcomes]

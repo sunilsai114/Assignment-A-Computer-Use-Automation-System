@@ -39,6 +39,7 @@ class RecoveryKind(str, Enum):
     interstitial_dismissed = "interstitial_dismissed"
     retry_transient = "retry_transient"
     reauthenticated = "reauthenticated"
+    locator_fallback = "locator_fallback"  # primary locator missed; a fallback matched: a drift signal
 
 
 class Strict(BaseModel):

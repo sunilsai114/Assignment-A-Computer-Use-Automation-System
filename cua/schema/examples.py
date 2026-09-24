@@ -61,6 +61,7 @@ def heritage_lookup_member() -> Capability:
         ],
         interstitials=[Interstitial(
             name="rate_notice", detected_by=TextPresent(text="Rate sheet updated", frame="m"),
+            resume_from="enter_member",
             dismiss=Step(id="dismiss.rate_notice", intent="Acknowledge the rate notice", action=A.click,
                          target=tgt(loc("text", "Visible link text.", "medium", text="Continue"), frame=("m",))))],
         auth=AuthFlow(
@@ -87,6 +88,7 @@ def nova_override() -> VariantOverride:
         note="Modern skin: semantic roles, route-based navigation, different wording.",
         values={"open_app": ValueRef(literal="/nova/customers")},
         skip_steps=["open_inquiry"],
+        posts={"submit_search": [TextPresent(text="Current balance")]},
         targets={
             "enter_member": tgt(loc("role", "Labelled textbox.", "high", role="textbox", name="Customer ID"), tag="input"),
             "submit_search": tgt(loc("role", "Button by name.", "high", role="button", name="Look up")),

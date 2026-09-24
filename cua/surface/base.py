@@ -1,0 +1,39 @@
+"""The seam between 'how we perceive/act on a surface' and 'the recorded flow'.
+
+The replay engine and agent loop only ever talk to this Protocol. A legacy-web, desktop (UIA/AX) or
+remote-display surface implements the same methods; Locator kinds a surface can't honour return no match
+and the next-ranked locator is tried.
+"""
+from typing import Protocol
+
+from cua.schema.capability import Target
+
+
+class SurfaceError(Exception):
+    """Base for surface failures the engine maps to a FailureCategory."""
+
+
+class TargetNotFound(SurfaceError):
+    """No locator resolved to exactly one control."""
+
+
+class NavigationBlocked(SurfaceError):
+    """The policy network guard refused a request."""
+
+
+class Surface(Protocol):
+    last_status: int | None
+    last_locator_index: int
+
+    async def goto(self, url: str) -> None: ...
+    async def url(self) -> str: ...
+    async def click(self, target: Target) -> None: ...
+    async def fill(self, target: Target, text: str) -> None: ...
+    async def select(self, target: Target, value: str) -> None: ...
+    async def read(self, target: Target) -> str: ...
+    async def exists(self, target: Target) -> bool: ...
+    async def page_text(self, frame: str | None = None) -> str: ...
+    async def settle(self, timeout_ms: int = 8000) -> int: ...
+    async def screenshot(self) -> bytes: ...
+    async def dom_snapshot(self) -> str: ...
+    def reset_status(self) -> None: ...
