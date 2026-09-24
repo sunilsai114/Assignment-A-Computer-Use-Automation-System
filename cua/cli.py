@@ -89,10 +89,15 @@ def replay(
     operator_port: int = typer.Option(8020, help="Operator console port (attended mode)."),
     handoff_timeout: float = typer.Option(300, help="Seconds to wait for an operator to respond."),
     runs_dir: Path = typer.Option(ROOT / "runs", help="Where evidence is written."),
+    allow_draft: bool = typer.Option(False, help="Run a draft capability (review/testing only)."),
 ) -> None:
     """Replay a capability deterministically (no LLM). Prints the structured result."""
     load_dotenv(ROOT / ".env")
     cap = load_capability(capability)
+    if cap.meta.status != "approved" and not allow_draft:
+        typer.echo(f"'{cap.meta.id}' is a {cap.meta.status}: review and approve it before production use, "
+                   "or pass --allow-draft to test it.", err=True)
+        raise typer.Exit(EXIT["FAILED"])
     result = asyncio.run(_replay(cap, parse_inputs(inputs), variant, base_url, attended, headed or attended,
                                  channel, operator_port, handoff_timeout, runs_dir))
     sensitive = {o.name for o in cap.outputs if o.sensitive}

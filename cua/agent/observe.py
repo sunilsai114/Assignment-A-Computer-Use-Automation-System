@@ -44,7 +44,8 @@ OBSERVE_JS = r"""
       aria: clean(e.getAttribute('aria-label')), label: e.labels && e.labels.length ? clean(e.labels[0].innerText) : '',
       adjacent: prev ? clean(prev.innerText) : '',
       value_attr: tag === 'input' && ['submit','button'].includes(type) ? e.value : null,
-      options: tag === 'select' ? [...e.options].map(o => clean(o.text)) : null, text}, extra || {}));
+      options: tag === 'select' ? [...e.options].map(o => clean(o.text)) : null, text,
+      filled: ['input','textarea'].includes(tag) ? String(e.value || '').length > 0 : null}, extra || {}));
   };
   const sel = 'a[href],button,input:not([type=hidden]),select,textarea,[onclick],[role=button],[role=link],h1,h2,h3';
   for (const e of document.querySelectorAll(sel)) if (visible(e)) add(e);
@@ -77,6 +78,7 @@ class Element:
     text: str
     row_text: str | None = None
     col: int | None = None
+    filled: bool | None = None  # for password fields: whether something was typed (the value is never read)
 
     @property
     def frame(self) -> str | None:
@@ -114,7 +116,7 @@ class Observation:
                 if e.row_text is not None:
                     bits.append(f"[row \"{redactor.text(e.row_text)}\", col {e.col}]")
                 if e.type == "password":
-                    bits.append("(password)")
+                    bits.append("(password, filled)" if e.filled else "(password, empty)")
                 if e.options:
                     bits.append(f"options={e.options}")
                 if e.role == "textbox" and e.text and not structure_only:

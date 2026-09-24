@@ -1,0 +1,462 @@
+{
+  "meta": {
+    "id": "memberserv.open_subaccount_discovered",
+    "name": "Open a new Savings sub-account for member {{member_id}} with an opening deposit…",
+    "description": "Discovered from goal: Open a new Savings sub-account for member {{member_id}} with an opening deposit of 50 and nickname {{nickname}}, and reach the review screen",
+    "schema_version": "1",
+    "version": "0.1.0",
+    "status": "draft",
+    "app": "memberserv",
+    "variant": "heritage",
+    "created_by": "disc-2ee16164"
+  },
+  "inputs": [
+    {
+      "name": "member_id",
+      "type": "string",
+      "description": "Supplied by the caller.",
+      "required": true,
+      "sensitive": false
+    },
+    {
+      "name": "product",
+      "type": "enum",
+      "description": "Supplied by the caller; one of the options the app offered.",
+      "required": true,
+      "enum": [
+        "Savings",
+        "Checking",
+        "Money Market"
+      ],
+      "sensitive": false
+    },
+    {
+      "name": "opening_deposit",
+      "type": "money",
+      "description": "Supplied by the caller.",
+      "required": true,
+      "sensitive": false
+    },
+    {
+      "name": "nickname",
+      "type": "string",
+      "description": "Supplied by the caller.",
+      "required": true,
+      "sensitive": false
+    }
+  ],
+  "outputs": [],
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "open_app",
+      "intent": "Open the application entry point",
+      "action": "navigate",
+      "value": {
+        "literal": "/heritage/"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "HERITAGE CREDIT UNION MemberServ v4.2",
+          "frame": "t"
+        }
+      ]
+    },
+    {
+      "id": "enter_member_number",
+      "intent": "Enter member number",
+      "action": "type",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Member Number"
+            },
+            "robustness": "medium",
+            "why": "The label an operator reads beside the field (a <label> or the neighbouring cell)."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "f1"
+            },
+            "robustness": "medium",
+            "why": "Form field name: cryptic but stable in a slowly-changing app."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "value": {
+        "param": "member_id"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "click_go_to_search_for_member",
+      "intent": "Click Go to search for member {{member_id}}",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "role",
+            "params": {
+              "role": "button",
+              "name": "Go"
+            },
+            "robustness": "high",
+            "why": "ARIA role + accessible name: survives markup and layout changes."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "value",
+              "value": "Go"
+            },
+            "robustness": "low",
+            "why": "Button caption attribute: breaks if the caption is reworded."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Member {{member_id}}",
+          "frame": "m"
+        }
+      ]
+    },
+    {
+      "id": "click_new_sub_account",
+      "intent": "Click New Sub-Account",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "text",
+            "params": {
+              "text": "New Sub-Account"
+            },
+            "robustness": "medium",
+            "why": "Visible text of the control: the only handle on non-semantic clickable markup."
+          }
+        ]
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Open Sub-Account for member {{member_id}}",
+          "frame": "m"
+        }
+      ]
+    },
+    {
+      "id": "select_savings_product_type",
+      "intent": "select Savings product type",
+      "action": "select",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Product Type"
+            },
+            "robustness": "medium",
+            "why": "The label an operator reads beside the field (a <label> or the neighbouring cell)."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "p1"
+            },
+            "robustness": "medium",
+            "why": "Form field name: cryptic but stable in a slowly-changing app."
+          }
+        ],
+        "expect_tag": "select"
+      },
+      "value": {
+        "param": "product"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "enter_opening_deposit",
+      "intent": "Enter opening deposit",
+      "action": "type",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Opening Deposit"
+            },
+            "robustness": "medium",
+            "why": "The label an operator reads beside the field (a <label> or the neighbouring cell)."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "p2"
+            },
+            "robustness": "medium",
+            "why": "Form field name: cryptic but stable in a slowly-changing app."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "value": {
+        "param": "opening_deposit"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "enter_nickname",
+      "intent": "Enter nickname {{nickname}}",
+      "action": "type",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Nickname"
+            },
+            "robustness": "medium",
+            "why": "The label an operator reads beside the field (a <label> or the neighbouring cell)."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "p3"
+            },
+            "robustness": "medium",
+            "why": "Form field name: cryptic but stable in a slowly-changing app."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "value": {
+        "param": "nickname"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "click_continue_to_reach_the_revi",
+      "intent": "Click Continue to reach the review screen",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "role",
+            "params": {
+              "role": "button",
+              "name": "Continue"
+            },
+            "robustness": "high",
+            "why": "ARIA role + accessible name: survives markup and layout changes."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "value",
+              "value": "Continue"
+            },
+            "robustness": "low",
+            "why": "Button caption attribute: breaks if the caption is reworded."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Review Sub-Account Application",
+          "frame": "m"
+        }
+      ]
+    }
+  ],
+  "success": {
+    "kind": "text_present",
+    "text": "Review Sub-Account Application",
+    "frame": "m"
+  },
+  "outcomes": [],
+  "interstitials": [],
+  "auth": {
+    "steps": [
+      {
+        "id": "enter_operator_id",
+        "intent": "enter operator id",
+        "action": "type",
+        "target": {
+          "frame_path": [
+            "m"
+          ],
+          "locators": [
+            {
+              "kind": "label_text",
+              "params": {
+                "text": "Operator ID"
+              },
+              "robustness": "medium",
+              "why": "The label an operator reads beside the field (a <label> or the neighbouring cell)."
+            },
+            {
+              "kind": "attr",
+              "params": {
+                "attr": "name",
+                "value": "u1"
+              },
+              "robustness": "medium",
+              "why": "Form field name: cryptic but stable in a slowly-changing app."
+            }
+          ],
+          "expect_tag": "input"
+        },
+        "value": {
+          "secret_env": "HERITAGE_USER"
+        },
+        "parse": "text",
+        "risk": "safe",
+        "pre": [],
+        "post": []
+      },
+      {
+        "id": "type_operator_passcode",
+        "intent": "type operator passcode",
+        "action": "type",
+        "target": {
+          "frame_path": [
+            "m"
+          ],
+          "locators": [
+            {
+              "kind": "label_text",
+              "params": {
+                "text": "Passcode"
+              },
+              "robustness": "medium",
+              "why": "The label an operator reads beside the field (a <label> or the neighbouring cell)."
+            },
+            {
+              "kind": "attr",
+              "params": {
+                "attr": "name",
+                "value": "u2"
+              },
+              "robustness": "medium",
+              "why": "Form field name: cryptic but stable in a slowly-changing app."
+            }
+          ],
+          "expect_tag": "input"
+        },
+        "value": {
+          "secret_env": "HERITAGE_PASS"
+        },
+        "parse": "text",
+        "risk": "safe",
+        "pre": [],
+        "post": []
+      },
+      {
+        "id": "sign_on_to_the_application",
+        "intent": "sign on to the application",
+        "action": "click",
+        "target": {
+          "frame_path": [
+            "m"
+          ],
+          "locators": [
+            {
+              "kind": "role",
+              "params": {
+                "role": "button",
+                "name": "Sign On"
+              },
+              "robustness": "high",
+              "why": "ARIA role + accessible name: survives markup and layout changes."
+            },
+            {
+              "kind": "attr",
+              "params": {
+                "attr": "value",
+                "value": "Sign On"
+              },
+              "robustness": "low",
+              "why": "Button caption attribute: breaks if the caption is reworded."
+            }
+          ],
+          "expect_tag": "input"
+        },
+        "parse": "text",
+        "risk": "safe",
+        "pre": [],
+        "post": []
+      }
+    ],
+    "logged_in_when": {
+      "kind": "text_present",
+      "text": "Member Inquiry",
+      "frame": "m"
+    },
+    "session_expired_when": {
+      "kind": "text_present",
+      "text": "Operator ID",
+      "frame": "m"
+    },
+    "resume_from": "enter_member_number"
+  },
+  "variants": []
+}

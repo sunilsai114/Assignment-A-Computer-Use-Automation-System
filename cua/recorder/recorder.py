@@ -168,9 +168,15 @@ class FlowRecorder:
         return step
 
     def new_step(self, **kw) -> Step:
-        kw["id"] = self._id(kw.pop("intent_for_id", kw["intent"]))
+        # intents are written by the model and may quote caller data ("search for member 12345")
+        kw["intent"] = self.template(kw["intent"])
+        kw["id"] = self._id(PLACEHOLDER.sub("", kw.pop("intent_for_id", kw["intent"])))
         step = Step(**kw)
         return step.model_copy(update={"risk": self.policy.risk_of(step)})
+
+    @staticmethod
+    def _short(text: str, limit: int = 80) -> str:
+        return text if len(text) <= limit else text[:limit].rsplit(" ", 1)[0] + "…"
 
     def _param(self, name: str, type_: str) -> Param:
         if type_ == "enum":
@@ -198,7 +204,7 @@ class FlowRecorder:
                             logged_in_when=logged_in[0] if len(logged_in) == 1 else AllOf(conditions=logged_in),
                             resume_from=self.auth_resume_from)
         cap = Capability(
-            meta=Meta(id=cap_id, name=self.template(name), description=f"Discovered from goal: {self.template(goal)}",
+            meta=Meta(id=cap_id, name=self._short(self.template(name)), description=f"Discovered from goal: {self.template(goal)}",
                       version="0.1.0",
                       status="draft", app=app, variant=variant, created_by=run_id),
             inputs=[self._param(n, t) for n, (t, _) in self.inputs.items()],

@@ -229,6 +229,9 @@ class DiscoveryAgent:
         self.flow.record(step, secret)
         if act == Action.read:
             return "ok", f"recorded {output} = {self.redactor.text(self.read[output])}"
+        if act in (Action.type, Action.select):
+            shown = "<hidden>" if secret else self.redactor.text(concrete)
+            return "ok", f"{'typed' if act == Action.type else 'selected'} {shown} into \"{el.name}\""
         return "ok", self._change(before, after)
 
     async def _navigate(self, path: str, intent: str) -> tuple[str, str]:
@@ -265,17 +268,21 @@ class DiscoveryAgent:
     # (names, balances, account numbers) are scrubbed from anything logged, unless they are also screen
     # vocabulary (row labels, control names, drop-down options) that a reviewer needs to read the log.
     def _learn_data(self, obs: Observation) -> None:
-        vocab = {e.name for e in obs.elements if e.row_text is None} | {e.row_text for e in obs.elements if e.row_text}
-        vocab |= {o for e in obs.elements for o in (e.options or [])}
+        # vocabulary accumulates over the whole run: a word that was ever a label or option is not data
+        self._vocab = getattr(self, "_vocab", set(self.goal.split()))
+        self._vocab |= {e.name for e in obs.elements if e.row_text is None} | {e.row_text for e in obs.elements if e.row_text}
+        self._vocab |= {o for e in obs.elements for o in (e.options or [])}
         self._scrub_values = getattr(self, "_scrub_values", set()) | {
-            e.text for e in obs.elements if e.row_text is not None and len(e.text) >= 4 and e.text not in vocab}
+            e.text for e in obs.elements if e.row_text is not None and len(e.text) >= 4}
 
     def _scrub(self, value):
         if isinstance(value, dict):
             return {k: self._scrub(v) for k, v in value.items()}
         if isinstance(value, str):
+            vocab = getattr(self, "_vocab", set())
             for v in sorted(getattr(self, "_scrub_values", ()), key=len, reverse=True):
-                value = value.replace(v, MASK)
+                if v not in vocab:
+                    value = value.replace(v, MASK)
         return value
 
     @staticmethod
@@ -316,7 +323,7 @@ class DiscoveryAgent:
 
     def _complete(self, summary: str) -> DiscoveryResult:
         try:
-            cap = self.flow.build(cap_id=self.cap_id, name=self.goal[:80], goal=self.goal, app=self.app,
+            cap = self.flow.build(cap_id=self.cap_id, name=self.goal, goal=self.goal, app=self.app,
                                   variant=self.variant, run_id=self.run_id)
         except (RecordError, ValueError) as e:
             return self._result("failed", f"goal reached but the flow could not be recorded: {e}")
@@ -349,10 +356,10 @@ class DiscoveryAgent:
         if result.capability:
             self.rec.write_json("capability.json", result.capability.model_dump(mode="json", exclude_none=True))
         self.rec.write_json("discovery.json", {
-            "status": result.status, "reason": result.reason, "goal": self.goal, "model": self.model.name,
+            "status": result.status, "reason": self._scrub(result.reason), "goal": self.goal, "model": self.model.name,
             "turns": result.turns, "notes": result.notes, "intervention_id": result.intervention_id,
             "outputs": {k: (v if self.outputs.get(k) == "money" else MASK) for k, v in result.outputs.items()}})
-        self.rec.log("discovery_end", status=result.status, reason=result.reason, turns=result.turns)
+        self.rec.log("discovery_end", status=result.status, reason=self._scrub(result.reason), turns=result.turns)
         return result
 
 

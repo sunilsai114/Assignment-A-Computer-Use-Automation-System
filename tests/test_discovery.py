@@ -24,14 +24,14 @@ SIGN_IN = [
 LOOKUP = [
     *SIGN_IN,
     ("type_text", {"name": "Member Number"}, {"text": "{{member_id}}", "intent": "Enter member number"}),
-    ("click", {"name": "Go"}, {"intent": "Search for the member"}),
+    ("click", {"name": "Go"}, {"intent": "Search for member 12345"}),  # model-written intents quote data
     ("read_output", {"row_text": "Savings", "col": 2}, {"output": "savings_balance", "intent": "Read savings balance"}),
     ("done", {}, {"summary": "Read the savings balance"}),
 ]
 SUBACCOUNT = [
     *SIGN_IN,
     ("type_text", {"name": "Member Number"}, {"text": "{{member_id}}", "intent": "Enter member number"}),
-    ("click", {"name": "Go"}, {"intent": "Search for the member"}),
+    ("click", {"name": "Go"}, {"intent": "Search for member 12345"}),  # model-written intents quote data
     ("click", {"name": "New Sub-Account"}, {"intent": "Open the new sub-account form"}),
     ("select_option", {"name": "Product Type"}, {"option": "{{product}}", "intent": "Choose product"}),
     ("type_text", {"name": "Opening Deposit"}, {"text": "{{opening_deposit}}", "intent": "Enter opening deposit"}),
@@ -71,7 +71,7 @@ async def test_discovery_records_a_capability_that_replays(discover, replay):
     typed = next(s for s in cap.steps if s.action == Action.type)
     assert typed.value.param == "member_id"
     # the search's checkpoint was templated, not baked
-    go = next(s for s in cap.steps if s.intent == "Search for the member")
+    go = next(s for s in cap.steps if s.intent == "Search for member {{member_id}}")
     assert go.post[0].text == "Member {{member_id}}"
     assert go.target.locators[0].kind == "role" and go.target.locators[0].robustness == "high"
 
