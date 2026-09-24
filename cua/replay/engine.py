@@ -375,6 +375,8 @@ class Replayer:
             st.rec.log("signed_in", step=step.id)
         st.signed_in = True
         st.outputs.clear()
+        if auth.resume_from:
+            return next(k for k, s in enumerate(st.cap.steps) if s.id == auth.resume_from)
         return 0
 
     # ───────────────────────── human handoff ─────────────────────────

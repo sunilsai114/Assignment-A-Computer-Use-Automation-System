@@ -205,6 +205,14 @@ class WebSurface:
     async def read(self, target: Target) -> str:
         return (await self._do((await self._resolve(target)).inner_text(timeout=3000))).strip()
 
+    async def identify(self, target: Target, attr: str) -> str | None:
+        """If the target resolves to exactly one element, return that element's `attr` (else None).
+        The recorder uses this to prove a locator hits the very element the agent acted on."""
+        try:
+            return await (await self._resolve(target)).get_attribute(attr, timeout=1000)
+        except (TargetNotFound, PlaywrightError):
+            return None
+
     async def exists(self, target: Target) -> bool:
         try:
             await self._resolve(target)
@@ -213,10 +221,17 @@ class WebSurface:
             return False
 
     # ── evidence ──
-    async def screenshot(self) -> bytes:
+    async def screenshot(self, mask_data: bool = False) -> bytes:
+        """Password fields are always masked. mask_data also blanks table values (not their row labels) and
+        typed field contents: used for evidence files, which outlive the run and may be widely read."""
         masks = []
         for f in self.page.frames:
+            if f.is_detached():
+                continue
             masks.append(f.locator("input[type=password]"))
+            if mask_data:
+                masks.append(f.locator("tr:not(:has(tr)) > td:not(:first-child)"))
+                masks.append(f.locator("input:not([type=submit]):not([type=button]):not([type=hidden])"))
         return await self.page.screenshot(mask=masks)
 
     async def dom_snapshot(self) -> str:

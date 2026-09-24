@@ -150,10 +150,98 @@ async def _replay(cap, inputs, variant, base_url, attended, headed, channel, ope
             await browser.close()
 
 
+def parse_typed(pairs: list[str], with_value: bool) -> dict:
+    """'name:type=value' (inputs) or 'name:type' (outputs); type defaults to string."""
+    out = {}
+    for p in pairs:
+        head, _, value = p.partition("=") if with_value else (p, "", "")
+        name, _, type_ = head.partition(":")
+        if not name.strip() or (with_value and "=" not in p):
+            raise typer.BadParameter(f"'{p}' must look like name:type{'=value' if with_value else ''}")
+        type_ = (type_ or "string").strip()
+        if type_ not in ("string", "int", "money", "enum", "bool"):
+            raise typer.BadParameter(f"unknown type '{type_}' in '{p}'")
+        out[name.strip()] = (type_, value) if with_value else type_
+    return out
+
+
 @app.command()
-def discover() -> None:
-    """Run the LLM agent on a goal and record a capability. (Next milestone.)"""
-    typer.echo("not implemented yet")
+def discover(
+    goal: str = typer.Argument(..., help="What to accomplish, in plain language."),
+    start: str = typer.Option("/heritage/", help="Entry path of the target app."),
+    inputs: list[str] = typer.Option([], "--input", "-i", help="Caller input as name:type=example, e.g. member_id=12345."),
+    outputs: list[str] = typer.Option([], "--output", "-o", help="Value to read as name:type, e.g. savings_balance:money."),
+    cap_id: str = typer.Option(..., "--id", help="Capability id to save, e.g. memberserv.lookup_member_discovered."),
+    app_name: str = typer.Option("memberserv", "--app", help="Vendor product id shared across tenants."),
+    variant: str = typer.Option("heritage", help="Tenant/variant the run is recorded on."),
+    secrets: list[str] = typer.Option(["HERITAGE_USER", "HERITAGE_PASS"], "--secret", help="Env vars the agent may sign in with."),
+    model: str | None = typer.Option(None, help="Gemini model (default: GEMINI_MODEL from .env)."),
+    vision: bool = typer.Option(False, help="Also send a screenshot each turn (off: screens can hold customer data)."),
+    base_url: str = typer.Option("http://127.0.0.1:8010"),
+    attended: bool = typer.Option(False, help="On 'stuck', pause for an operator instead of stopping."),
+    headed: bool = typer.Option(False),
+    channel: str | None = typer.Option(None),
+    operator_port: int = typer.Option(8020),
+    verify: bool = typer.Option(True, help="Replay the recorded capability once (no LLM) to prove it works."),
+    runs_dir: Path = typer.Option(ROOT / "runs"),
+) -> None:
+    """Let the LLM accomplish a goal on the live app, then save what it did as a draft capability."""
+    load_dotenv(ROOT / ".env")
+    settings = Settings()
+    if settings.gemini_api_key is None:
+        raise typer.BadParameter("GEMINI_API_KEY is not set (put it in .env)")
+    from cua.agent.gemini import GeminiClient
+    client = GeminiClient(settings.gemini_api_key.get_secret_value(), model or settings.gemini_model)
+    ins, outs = parse_typed(inputs, True), parse_typed(outputs, False)
+    result = asyncio.run(_discover(client, goal, start, ins, outs, cap_id, app_name, variant, secrets, vision,
+                                   base_url, attended, headed or attended, channel, operator_port, runs_dir))
+    typer.echo(f"discovery: {result.status} after {result.turns} turns ({result.reason})")
+    typer.echo(f"evidence:  {result.evidence_dir}")
+    for note in result.notes:
+        typer.echo(f"note: {note}")
+    if result.capability is None:
+        raise typer.Exit(1)
+    path = ROOT / "capabilities" / f"{cap_id}.json"
+    path.write_text(result.capability.to_json(), encoding="utf-8")
+    typer.echo(f"saved draft capability: {path}")
+    if verify:
+        replay_inputs = {n: v for n, (_, v) in ins.items()}
+        res = asyncio.run(_replay(result.capability, replay_inputs, None, base_url, False, False, channel,
+                                  operator_port, 60, runs_dir))
+        typer.echo(f"verification replay (no LLM): {res.status.value}  evidence: {res.evidence_dir}")
+        raise typer.Exit(0 if res.ok else 1)
+
+
+async def _discover(client, goal, start, ins, outs, cap_id, app_name, variant, secrets, vision, base_url, attended,
+                    headed, channel, operator_port, runs_dir):
+    from playwright.async_api import async_playwright
+
+    from cua.agent.loop import DiscoveryAgent
+    from cua.handoff.controller import SessionController
+    from cua.handoff.intervention import InterventionStore
+    from cua.handoff.operator import start_operator_server
+    from cua.policy.engine import Policy
+    from cua.surface.web import WebSurface
+
+    policy = Policy.from_yaml()
+    async with async_playwright() as pw:
+        browser = await launch_browser(pw, headed, channel)
+        surface = await WebSurface.open(browser, base_url, policy)
+        ctrl = server = task = None
+        if attended:
+            ctrl = SessionController(InterventionStore(runs_dir), policy.redactor)
+            await ctrl.attach(surface)
+            server, task = await start_operator_server(ctrl, operator_port)
+            typer.echo(f"operator console: http://127.0.0.1:{operator_port}", err=True)
+        try:
+            agent = DiscoveryAgent(surface, client, policy, runs_dir=runs_dir, controller=ctrl, vision=vision)
+            return await agent.run(goal=goal, start=start, inputs=ins, outputs=outs, cap_id=cap_id, app=app_name,
+                                   variant=variant, secret_names=secrets)
+        finally:
+            if server:
+                server.should_exit = True
+                await task
+            await browser.close()
 
 
 if __name__ == "__main__":

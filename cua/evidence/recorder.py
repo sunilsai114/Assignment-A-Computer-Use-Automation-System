@@ -26,7 +26,7 @@ class EvidenceRecorder:
 
     async def screenshot(self, name: str, surface) -> str | None:
         try:
-            (self.dir / f"{name}.png").write_bytes(await surface.screenshot())
+            (self.dir / f"{name}.png").write_bytes(await surface.screenshot(mask_data=True))
             return f"{name}.png"
         except Exception as e:  # noqa: BLE001  evidence must never mask the real failure
             self.log("evidence_error", what="screenshot", error=repr(e))

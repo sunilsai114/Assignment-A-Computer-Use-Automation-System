@@ -220,6 +220,9 @@ class AuthFlow(Strict):
     steps: list[Step] = Field(min_length=1)
     logged_in_when: Condition
     session_expired_when: Condition
+    resume_from: str | None = Field(
+        default=None, description="Main-step id to continue from after signing in (default: restart the flow). "
+        "Needed when signing in lands on the app's home screen and re-running the first navigation would undo it.")
 
 
 class VariantOverride(Strict):
@@ -282,6 +285,8 @@ class Capability(Strict):
         if len(params) != len(self.inputs) or len(outs) != len(self.outputs):
             raise ValueError("input/output names must be unique")
 
+        if self.auth and self.auth.resume_from and self.auth.resume_from not in {s.id for s in self.steps}:
+            raise ValueError(f"auth: unknown resume_from '{self.auth.resume_from}'")
         for it in self.interstitials:
             if it.resume_from and it.resume_from not in {s.id for s in self.steps}:
                 raise ValueError(f"interstitial '{it.name}': unknown resume_from '{it.resume_from}'")
