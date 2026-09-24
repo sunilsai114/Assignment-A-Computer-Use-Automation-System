@@ -1,0 +1,577 @@
+{
+  "meta": {
+    "id": "memberserv.lookup_member",
+    "name": "Look up a member and read their savings balance",
+    "description": "Signs in if needed, searches a member number, returns the savings balance.",
+    "schema_version": "1",
+    "version": "1.0.0",
+    "status": "approved",
+    "app": "memberserv",
+    "variant": "heritage",
+    "created_by": "hand-authored"
+  },
+  "inputs": [
+    {
+      "name": "member_id",
+      "type": "string",
+      "description": "Member number to look up.",
+      "required": true,
+      "pattern": "[0-9A-Za-z-]{1,20}",
+      "sensitive": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "savings_balance",
+      "type": "money",
+      "description": "Current savings balance in USD.",
+      "sensitive": false
+    },
+    {
+      "name": "member_name",
+      "type": "string",
+      "description": "Member's full name.",
+      "sensitive": true
+    }
+  ],
+  "preconditions": [],
+  "steps": [
+    {
+      "id": "open_app",
+      "intent": "Open the MemberServ home frameset",
+      "action": "navigate",
+      "value": {
+        "literal": "/heritage/"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "open_inquiry",
+      "intent": "Open Member Inquiry from the left nav",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "n"
+        ],
+        "locators": [
+          {
+            "kind": "text",
+            "params": {
+              "text": "Member Inquiry"
+            },
+            "robustness": "medium",
+            "why": "Visible link text."
+          }
+        ]
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Member Inquiry",
+          "frame": "m"
+        }
+      ]
+    },
+    {
+      "id": "enter_member",
+      "intent": "Type the member number",
+      "action": "type",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Member Number"
+            },
+            "robustness": "medium",
+            "why": "Label sits in the neighbouring <td>; survives markup reshuffles."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "f1"
+            },
+            "robustness": "medium",
+            "why": "Cryptic but stable field name in a slowly-changing app."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "value": {
+        "param": "member_id"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "submit_search",
+      "intent": "Submit the search",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "role",
+            "params": {
+              "role": "button",
+              "name": "Go"
+            },
+            "robustness": "high",
+            "why": "Submit button by accessible name."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "value",
+              "value": "Go"
+            },
+            "robustness": "medium",
+            "why": "Fallback on button value."
+          }
+        ]
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Member {{member_id}}",
+          "frame": "m"
+        }
+      ]
+    },
+    {
+      "id": "read_balance",
+      "intent": "Read the Savings row balance",
+      "action": "read",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "table_cell",
+            "params": {
+              "row_text": "Savings",
+              "col": 2
+            },
+            "robustness": "medium",
+            "why": "Row is found by its product label, so row order can change."
+          }
+        ]
+      },
+      "output": "savings_balance",
+      "parse": "money",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "read_name",
+      "intent": "Read the member's name",
+      "action": "read",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "table_cell",
+            "params": {
+              "row_text": "Name",
+              "col": 1
+            },
+            "robustness": "medium",
+            "why": "Row found by its 'Name' label."
+          }
+        ]
+      },
+      "output": "member_name",
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    }
+  ],
+  "success": {
+    "kind": "all_of",
+    "conditions": [
+      {
+        "kind": "text_present",
+        "text": "Member {{member_id}}",
+        "frame": "m"
+      },
+      {
+        "kind": "text_present",
+        "text": "Savings",
+        "frame": "m"
+      }
+    ]
+  },
+  "outcomes": [
+    {
+      "code": "member_not_found",
+      "description": "No member matches that number.",
+      "detected_by": {
+        "kind": "text_present",
+        "text": "No records match your request",
+        "frame": "m"
+      },
+      "returns": {
+        "found": false
+      }
+    },
+    {
+      "code": "permission_denied",
+      "description": "Operator may not view this record.",
+      "detected_by": {
+        "kind": "text_present",
+        "text": "Access denied",
+        "frame": "m"
+      },
+      "returns": {}
+    },
+    {
+      "code": "invalid_member_number",
+      "description": "The app rejected the number's format.",
+      "detected_by": {
+        "kind": "text_present",
+        "text": "must be numeric",
+        "frame": "m"
+      },
+      "returns": {}
+    }
+  ],
+  "interstitials": [
+    {
+      "name": "rate_notice",
+      "detected_by": {
+        "kind": "text_present",
+        "text": "Rate sheet updated",
+        "frame": "m"
+      },
+      "dismiss": {
+        "id": "dismiss.rate_notice",
+        "intent": "Acknowledge the rate notice",
+        "action": "click",
+        "target": {
+          "frame_path": [
+            "m"
+          ],
+          "locators": [
+            {
+              "kind": "text",
+              "params": {
+                "text": "Continue"
+              },
+              "robustness": "medium",
+              "why": "Visible link text."
+            }
+          ]
+        },
+        "parse": "text",
+        "risk": "safe",
+        "pre": [],
+        "post": []
+      }
+    }
+  ],
+  "auth": {
+    "steps": [
+      {
+        "id": "auth.user",
+        "intent": "Enter operator id",
+        "action": "type",
+        "target": {
+          "frame_path": [
+            "m"
+          ],
+          "locators": [
+            {
+              "kind": "label_text",
+              "params": {
+                "text": "Operator ID"
+              },
+              "robustness": "medium",
+              "why": "Adjacent label."
+            }
+          ],
+          "expect_tag": "input"
+        },
+        "value": {
+          "secret_env": "HERITAGE_USER"
+        },
+        "parse": "text",
+        "risk": "safe",
+        "pre": [],
+        "post": []
+      },
+      {
+        "id": "auth.pass",
+        "intent": "Enter passcode",
+        "action": "type",
+        "target": {
+          "frame_path": [
+            "m"
+          ],
+          "locators": [
+            {
+              "kind": "label_text",
+              "params": {
+                "text": "Passcode"
+              },
+              "robustness": "medium",
+              "why": "Adjacent label."
+            }
+          ],
+          "expect_tag": "input"
+        },
+        "value": {
+          "secret_env": "HERITAGE_PASS"
+        },
+        "parse": "text",
+        "risk": "safe",
+        "pre": [],
+        "post": []
+      },
+      {
+        "id": "auth.submit",
+        "intent": "Sign on",
+        "action": "click",
+        "target": {
+          "frame_path": [
+            "m"
+          ],
+          "locators": [
+            {
+              "kind": "role",
+              "params": {
+                "role": "button",
+                "name": "Sign On"
+              },
+              "robustness": "high",
+              "why": "Button by name."
+            }
+          ]
+        },
+        "parse": "text",
+        "risk": "safe",
+        "pre": [],
+        "post": []
+      }
+    ],
+    "logged_in_when": {
+      "kind": "text_present",
+      "text": "Member Inquiry",
+      "frame": "m"
+    },
+    "session_expired_when": {
+      "kind": "text_present",
+      "text": "Operator ID",
+      "frame": "m"
+    }
+  },
+  "variants": [
+    {
+      "variant": "nova",
+      "targets": {
+        "enter_member": {
+          "frame_path": [],
+          "locators": [
+            {
+              "kind": "role",
+              "params": {
+                "role": "textbox",
+                "name": "Customer ID"
+              },
+              "robustness": "high",
+              "why": "Labelled textbox."
+            }
+          ],
+          "expect_tag": "input"
+        },
+        "submit_search": {
+          "frame_path": [],
+          "locators": [
+            {
+              "kind": "role",
+              "params": {
+                "role": "button",
+                "name": "Look up"
+              },
+              "robustness": "high",
+              "why": "Button by name."
+            }
+          ]
+        },
+        "read_balance": {
+          "frame_path": [],
+          "locators": [
+            {
+              "kind": "table_cell",
+              "params": {
+                "row_text": "Savings",
+                "col": 2
+              },
+              "robustness": "medium",
+              "why": "Row found by product label."
+            }
+          ]
+        },
+        "read_name": {
+          "frame_path": [],
+          "locators": [
+            {
+              "kind": "role",
+              "params": {
+                "role": "heading",
+                "name": ".+"
+              },
+              "robustness": "high",
+              "why": "Page heading holds the name."
+            }
+          ]
+        }
+      },
+      "values": {
+        "open_app": {
+          "literal": "/nova/customers"
+        }
+      },
+      "skip_steps": [
+        "open_inquiry"
+      ],
+      "outcome_detectors": {
+        "member_not_found": {
+          "kind": "text_present",
+          "text": "Customer not found"
+        },
+        "permission_denied": {
+          "kind": "text_present",
+          "text": "do not have permission"
+        },
+        "invalid_member_number": {
+          "kind": "text_present",
+          "text": "Enter a numeric Customer ID"
+        }
+      },
+      "success": {
+        "kind": "all_of",
+        "conditions": [
+          {
+            "kind": "text_present",
+            "text": "Current balance"
+          },
+          {
+            "kind": "text_present",
+            "text": "Savings"
+          }
+        ]
+      },
+      "auth": {
+        "steps": [
+          {
+            "id": "auth.user",
+            "intent": "Enter username",
+            "action": "type",
+            "target": {
+              "frame_path": [],
+              "locators": [
+                {
+                  "kind": "role",
+                  "params": {
+                    "role": "textbox",
+                    "name": "Username"
+                  },
+                  "robustness": "high",
+                  "why": "Labelled textbox."
+                }
+              ],
+              "expect_tag": "input"
+            },
+            "value": {
+              "secret_env": "HERITAGE_USER"
+            },
+            "parse": "text",
+            "risk": "safe",
+            "pre": [],
+            "post": []
+          },
+          {
+            "id": "auth.pass",
+            "intent": "Enter password",
+            "action": "type",
+            "target": {
+              "frame_path": [],
+              "locators": [
+                {
+                  "kind": "label_text",
+                  "params": {
+                    "text": "Password"
+                  },
+                  "robustness": "high",
+                  "why": "Adjacent label."
+                }
+              ],
+              "expect_tag": "input"
+            },
+            "value": {
+              "secret_env": "HERITAGE_PASS"
+            },
+            "parse": "text",
+            "risk": "safe",
+            "pre": [],
+            "post": []
+          },
+          {
+            "id": "auth.submit",
+            "intent": "Sign in",
+            "action": "click",
+            "target": {
+              "frame_path": [],
+              "locators": [
+                {
+                  "kind": "role",
+                  "params": {
+                    "role": "button",
+                    "name": "Sign in"
+                  },
+                  "robustness": "high",
+                  "why": "Button by name."
+                }
+              ]
+            },
+            "parse": "text",
+            "risk": "safe",
+            "pre": [],
+            "post": []
+          }
+        ],
+        "logged_in_when": {
+          "kind": "text_present",
+          "text": "Customer ID"
+        },
+        "session_expired_when": {
+          "kind": "text_present",
+          "text": "Sign in"
+        }
+      },
+      "note": "Modern skin: semantic roles, route-based navigation, different wording."
+    }
+  ]
+}

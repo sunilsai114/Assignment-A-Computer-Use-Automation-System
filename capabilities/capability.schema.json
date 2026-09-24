@@ -1,0 +1,1263 @@
+{
+  "$defs": {
+    "Action": {
+      "enum": [
+        "navigate",
+        "click",
+        "type",
+        "select",
+        "read",
+        "wait"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "AllOf": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "all_of",
+          "default": "all_of",
+          "title": "Kind",
+          "type": "string"
+        },
+        "conditions": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "element_present": "#/$defs/ElementPresent",
+                "element_text_matches": "#/$defs/ElementTextMatches",
+                "text_absent": "#/$defs/TextAbsent",
+                "text_present": "#/$defs/TextPresent",
+                "url_matches": "#/$defs/UrlMatches"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextPresent"
+              },
+              {
+                "$ref": "#/$defs/TextAbsent"
+              },
+              {
+                "$ref": "#/$defs/UrlMatches"
+              },
+              {
+                "$ref": "#/$defs/ElementPresent"
+              },
+              {
+                "$ref": "#/$defs/ElementTextMatches"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Conditions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "conditions"
+      ],
+      "title": "AllOf",
+      "type": "object"
+    },
+    "AnyOf": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "any_of",
+          "default": "any_of",
+          "title": "Kind",
+          "type": "string"
+        },
+        "conditions": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "element_present": "#/$defs/ElementPresent",
+                "element_text_matches": "#/$defs/ElementTextMatches",
+                "text_absent": "#/$defs/TextAbsent",
+                "text_present": "#/$defs/TextPresent",
+                "url_matches": "#/$defs/UrlMatches"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextPresent"
+              },
+              {
+                "$ref": "#/$defs/TextAbsent"
+              },
+              {
+                "$ref": "#/$defs/UrlMatches"
+              },
+              {
+                "$ref": "#/$defs/ElementPresent"
+              },
+              {
+                "$ref": "#/$defs/ElementTextMatches"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Conditions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "conditions"
+      ],
+      "title": "AnyOf",
+      "type": "object"
+    },
+    "AuthFlow": {
+      "additionalProperties": false,
+      "description": "Re-establishes a session after expiry. Credentials come from env at runtime, never the artifact.",
+      "properties": {
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/Step"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        },
+        "logged_in_when": {
+          "discriminator": {
+            "mapping": {
+              "all_of": "#/$defs/AllOf",
+              "any_of": "#/$defs/AnyOf",
+              "element_present": "#/$defs/ElementPresent",
+              "element_text_matches": "#/$defs/ElementTextMatches",
+              "text_absent": "#/$defs/TextAbsent",
+              "text_present": "#/$defs/TextPresent",
+              "url_matches": "#/$defs/UrlMatches"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TextPresent"
+            },
+            {
+              "$ref": "#/$defs/TextAbsent"
+            },
+            {
+              "$ref": "#/$defs/UrlMatches"
+            },
+            {
+              "$ref": "#/$defs/ElementPresent"
+            },
+            {
+              "$ref": "#/$defs/ElementTextMatches"
+            },
+            {
+              "$ref": "#/$defs/AllOf"
+            },
+            {
+              "$ref": "#/$defs/AnyOf"
+            }
+          ],
+          "title": "Logged In When"
+        },
+        "session_expired_when": {
+          "discriminator": {
+            "mapping": {
+              "all_of": "#/$defs/AllOf",
+              "any_of": "#/$defs/AnyOf",
+              "element_present": "#/$defs/ElementPresent",
+              "element_text_matches": "#/$defs/ElementTextMatches",
+              "text_absent": "#/$defs/TextAbsent",
+              "text_present": "#/$defs/TextPresent",
+              "url_matches": "#/$defs/UrlMatches"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TextPresent"
+            },
+            {
+              "$ref": "#/$defs/TextAbsent"
+            },
+            {
+              "$ref": "#/$defs/UrlMatches"
+            },
+            {
+              "$ref": "#/$defs/ElementPresent"
+            },
+            {
+              "$ref": "#/$defs/ElementTextMatches"
+            },
+            {
+              "$ref": "#/$defs/AllOf"
+            },
+            {
+              "$ref": "#/$defs/AnyOf"
+            }
+          ],
+          "title": "Session Expired When"
+        }
+      },
+      "required": [
+        "steps",
+        "logged_in_when",
+        "session_expired_when"
+      ],
+      "title": "AuthFlow",
+      "type": "object"
+    },
+    "ElementPresent": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "element_present",
+          "default": "element_present",
+          "title": "Kind",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "title": "ElementPresent",
+      "type": "object"
+    },
+    "ElementTextMatches": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "element_text_matches",
+          "default": "element_text_matches",
+          "title": "Kind",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/Target"
+        },
+        "pattern": {
+          "title": "Pattern",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target",
+        "pattern"
+      ],
+      "title": "ElementTextMatches",
+      "type": "object"
+    },
+    "Interstitial": {
+      "additionalProperties": false,
+      "description": "A known, safe-to-dismiss dialog. Replay may click through it and retry the step (bounded).",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "detected_by": {
+          "discriminator": {
+            "mapping": {
+              "all_of": "#/$defs/AllOf",
+              "any_of": "#/$defs/AnyOf",
+              "element_present": "#/$defs/ElementPresent",
+              "element_text_matches": "#/$defs/ElementTextMatches",
+              "text_absent": "#/$defs/TextAbsent",
+              "text_present": "#/$defs/TextPresent",
+              "url_matches": "#/$defs/UrlMatches"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TextPresent"
+            },
+            {
+              "$ref": "#/$defs/TextAbsent"
+            },
+            {
+              "$ref": "#/$defs/UrlMatches"
+            },
+            {
+              "$ref": "#/$defs/ElementPresent"
+            },
+            {
+              "$ref": "#/$defs/ElementTextMatches"
+            },
+            {
+              "$ref": "#/$defs/AllOf"
+            },
+            {
+              "$ref": "#/$defs/AnyOf"
+            }
+          ],
+          "title": "Detected By"
+        },
+        "dismiss": {
+          "$ref": "#/$defs/Step"
+        }
+      },
+      "required": [
+        "name",
+        "detected_by",
+        "dismiss"
+      ],
+      "title": "Interstitial",
+      "type": "object"
+    },
+    "KnownOutcome": {
+      "additionalProperties": false,
+      "description": "An expected business result. Detecting one ends the run as BUSINESS_OUTCOME, not a failure.",
+      "properties": {
+        "code": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Code",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "detected_by": {
+          "discriminator": {
+            "mapping": {
+              "all_of": "#/$defs/AllOf",
+              "any_of": "#/$defs/AnyOf",
+              "element_present": "#/$defs/ElementPresent",
+              "element_text_matches": "#/$defs/ElementTextMatches",
+              "text_absent": "#/$defs/TextAbsent",
+              "text_present": "#/$defs/TextPresent",
+              "url_matches": "#/$defs/UrlMatches"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TextPresent"
+            },
+            {
+              "$ref": "#/$defs/TextAbsent"
+            },
+            {
+              "$ref": "#/$defs/UrlMatches"
+            },
+            {
+              "$ref": "#/$defs/ElementPresent"
+            },
+            {
+              "$ref": "#/$defs/ElementTextMatches"
+            },
+            {
+              "$ref": "#/$defs/AllOf"
+            },
+            {
+              "$ref": "#/$defs/AnyOf"
+            }
+          ],
+          "title": "Detected By"
+        },
+        "returns": {
+          "additionalProperties": true,
+          "title": "Returns",
+          "type": "object"
+        }
+      },
+      "required": [
+        "code",
+        "description",
+        "detected_by"
+      ],
+      "title": "KnownOutcome",
+      "type": "object"
+    },
+    "Locator": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "role",
+            "label_text",
+            "attr",
+            "table_cell",
+            "text",
+            "structural",
+            "visual"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "title": "Params",
+          "type": "object"
+        },
+        "robustness": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Robustness",
+          "type": "string"
+        },
+        "why": {
+          "description": "One-line reasoning a reviewer can challenge.",
+          "title": "Why",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "params",
+        "robustness",
+        "why"
+      ],
+      "title": "Locator",
+      "type": "object"
+    },
+    "Meta": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_.-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "title": "Version",
+          "type": "string"
+        },
+        "status": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "approved"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "app": {
+          "description": "Vendor product id shared across tenants, e.g. 'memberserv'.",
+          "title": "App",
+          "type": "string"
+        },
+        "variant": {
+          "description": "Tenant/version this was recorded on, e.g. 'heritage'.",
+          "title": "Variant",
+          "type": "string"
+        },
+        "created_by": {
+          "default": "",
+          "description": "Discovery run id, or 'hand-authored'.",
+          "title": "Created By",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "version",
+        "app",
+        "variant"
+      ],
+      "title": "Meta",
+      "type": "object"
+    },
+    "Output": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/ParamType"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "sensitive": {
+          "default": false,
+          "title": "Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "description"
+      ],
+      "title": "Output",
+      "type": "object"
+    },
+    "Param": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/ParamType"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Default"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Regex the value must fully match.",
+          "title": "Pattern"
+        },
+        "enum": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enum"
+        },
+        "sensitive": {
+          "default": false,
+          "description": "Redacted in every log and evidence file.",
+          "title": "Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "description"
+      ],
+      "title": "Param",
+      "type": "object"
+    },
+    "ParamType": {
+      "enum": [
+        "string",
+        "int",
+        "money",
+        "enum",
+        "bool"
+      ],
+      "title": "ParamType",
+      "type": "string"
+    },
+    "Risk": {
+      "enum": [
+        "safe",
+        "risky",
+        "irreversible"
+      ],
+      "title": "Risk",
+      "type": "string"
+    },
+    "Step": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z][a-z0-9_.]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "intent": {
+          "description": "Plain-language purpose; what a reviewer reads.",
+          "title": "Intent",
+          "type": "string"
+        },
+        "action": {
+          "$ref": "#/$defs/Action"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Target"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ValueRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For `read` steps: the declared Output this fills.",
+          "title": "Output"
+        },
+        "parse": {
+          "default": "text",
+          "enum": [
+            "text",
+            "money"
+          ],
+          "title": "Parse",
+          "type": "string"
+        },
+        "risk": {
+          "$ref": "#/$defs/Risk",
+          "default": "safe"
+        },
+        "pre": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "element_present": "#/$defs/ElementPresent",
+                "element_text_matches": "#/$defs/ElementTextMatches",
+                "text_absent": "#/$defs/TextAbsent",
+                "text_present": "#/$defs/TextPresent",
+                "url_matches": "#/$defs/UrlMatches"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextPresent"
+              },
+              {
+                "$ref": "#/$defs/TextAbsent"
+              },
+              {
+                "$ref": "#/$defs/UrlMatches"
+              },
+              {
+                "$ref": "#/$defs/ElementPresent"
+              },
+              {
+                "$ref": "#/$defs/ElementTextMatches"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              }
+            ]
+          },
+          "title": "Pre",
+          "type": "array"
+        },
+        "post": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "element_present": "#/$defs/ElementPresent",
+                "element_text_matches": "#/$defs/ElementTextMatches",
+                "text_absent": "#/$defs/TextAbsent",
+                "text_present": "#/$defs/TextPresent",
+                "url_matches": "#/$defs/UrlMatches"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextPresent"
+              },
+              {
+                "$ref": "#/$defs/TextAbsent"
+              },
+              {
+                "$ref": "#/$defs/UrlMatches"
+              },
+              {
+                "$ref": "#/$defs/ElementPresent"
+              },
+              {
+                "$ref": "#/$defs/ElementTextMatches"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              }
+            ]
+          },
+          "title": "Post",
+          "type": "array"
+        },
+        "timeout_ms": {
+          "anyOf": [
+            {
+              "maximum": 60000,
+              "minimum": 100,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timeout Ms"
+        }
+      },
+      "required": [
+        "id",
+        "intent",
+        "action"
+      ],
+      "title": "Step",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "description": "How to find one control. `locators` are tried in order; the first unique match wins.",
+      "properties": {
+        "frame_path": {
+          "description": "Nested frame names, outermost first.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Frame Path",
+          "type": "array"
+        },
+        "locators": {
+          "items": {
+            "$ref": "#/$defs/Locator"
+          },
+          "minItems": 1,
+          "title": "Locators",
+          "type": "array"
+        },
+        "expect_tag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "e.g. 'input': guards against matching the wrong control.",
+          "title": "Expect Tag"
+        }
+      },
+      "required": [
+        "locators"
+      ],
+      "title": "Target",
+      "type": "object"
+    },
+    "TextAbsent": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "text_absent",
+          "default": "text_absent",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "frame": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frame"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "TextAbsent",
+      "type": "object"
+    },
+    "TextPresent": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "text_present",
+          "default": "text_present",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "frame": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frame"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "TextPresent",
+      "type": "object"
+    },
+    "UrlMatches": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "url_matches",
+          "default": "url_matches",
+          "title": "Kind",
+          "type": "string"
+        },
+        "pattern": {
+          "title": "Pattern",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pattern"
+      ],
+      "title": "UrlMatches",
+      "type": "object"
+    },
+    "ValueRef": {
+      "additionalProperties": false,
+      "description": "Exactly one of: a fixed literal, a caller-supplied param, or a runtime secret (auth flow only).",
+      "properties": {
+        "literal": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Literal"
+        },
+        "param": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Param"
+        },
+        "secret_env": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name of an env var; the value is never stored.",
+          "title": "Secret Env"
+        }
+      },
+      "title": "ValueRef",
+      "type": "object"
+    },
+    "VariantOverride": {
+      "additionalProperties": false,
+      "description": "Per-tenant specialisation of a shared capability. Only targeting/detection may differ; the\ncontract (inputs, outputs, outcome codes, success meaning) stays identical across variants.",
+      "properties": {
+        "variant": {
+          "title": "Variant",
+          "type": "string"
+        },
+        "targets": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Target"
+          },
+          "description": "step id -> replacement target",
+          "title": "Targets",
+          "type": "object"
+        },
+        "values": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueRef"
+          },
+          "description": "step id -> replacement value (e.g. route)",
+          "title": "Values",
+          "type": "object"
+        },
+        "skip_steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Skip Steps",
+          "type": "array"
+        },
+        "outcome_detectors": {
+          "additionalProperties": {
+            "discriminator": {
+              "mapping": {
+                "all_of": "#/$defs/AllOf",
+                "any_of": "#/$defs/AnyOf",
+                "element_present": "#/$defs/ElementPresent",
+                "element_text_matches": "#/$defs/ElementTextMatches",
+                "text_absent": "#/$defs/TextAbsent",
+                "text_present": "#/$defs/TextPresent",
+                "url_matches": "#/$defs/UrlMatches"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextPresent"
+              },
+              {
+                "$ref": "#/$defs/TextAbsent"
+              },
+              {
+                "$ref": "#/$defs/UrlMatches"
+              },
+              {
+                "$ref": "#/$defs/ElementPresent"
+              },
+              {
+                "$ref": "#/$defs/ElementTextMatches"
+              },
+              {
+                "$ref": "#/$defs/AllOf"
+              },
+              {
+                "$ref": "#/$defs/AnyOf"
+              }
+            ]
+          },
+          "description": "outcome code -> condition",
+          "title": "Outcome Detectors",
+          "type": "object"
+        },
+        "success": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": {
+                  "all_of": "#/$defs/AllOf",
+                  "any_of": "#/$defs/AnyOf",
+                  "element_present": "#/$defs/ElementPresent",
+                  "element_text_matches": "#/$defs/ElementTextMatches",
+                  "text_absent": "#/$defs/TextAbsent",
+                  "text_present": "#/$defs/TextPresent",
+                  "url_matches": "#/$defs/UrlMatches"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/TextPresent"
+                },
+                {
+                  "$ref": "#/$defs/TextAbsent"
+                },
+                {
+                  "$ref": "#/$defs/UrlMatches"
+                },
+                {
+                  "$ref": "#/$defs/ElementPresent"
+                },
+                {
+                  "$ref": "#/$defs/ElementTextMatches"
+                },
+                {
+                  "$ref": "#/$defs/AllOf"
+                },
+                {
+                  "$ref": "#/$defs/AnyOf"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Success"
+        },
+        "auth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AuthFlow"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "variant"
+      ],
+      "title": "VariantOverride",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/Meta"
+    },
+    "inputs": {
+      "items": {
+        "$ref": "#/$defs/Param"
+      },
+      "title": "Inputs",
+      "type": "array"
+    },
+    "outputs": {
+      "items": {
+        "$ref": "#/$defs/Output"
+      },
+      "title": "Outputs",
+      "type": "array"
+    },
+    "preconditions": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "all_of": "#/$defs/AllOf",
+            "any_of": "#/$defs/AnyOf",
+            "element_present": "#/$defs/ElementPresent",
+            "element_text_matches": "#/$defs/ElementTextMatches",
+            "text_absent": "#/$defs/TextAbsent",
+            "text_present": "#/$defs/TextPresent",
+            "url_matches": "#/$defs/UrlMatches"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/TextPresent"
+          },
+          {
+            "$ref": "#/$defs/TextAbsent"
+          },
+          {
+            "$ref": "#/$defs/UrlMatches"
+          },
+          {
+            "$ref": "#/$defs/ElementPresent"
+          },
+          {
+            "$ref": "#/$defs/ElementTextMatches"
+          },
+          {
+            "$ref": "#/$defs/AllOf"
+          },
+          {
+            "$ref": "#/$defs/AnyOf"
+          }
+        ]
+      },
+      "title": "Preconditions",
+      "type": "array"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/Step"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    },
+    "success": {
+      "discriminator": {
+        "mapping": {
+          "all_of": "#/$defs/AllOf",
+          "any_of": "#/$defs/AnyOf",
+          "element_present": "#/$defs/ElementPresent",
+          "element_text_matches": "#/$defs/ElementTextMatches",
+          "text_absent": "#/$defs/TextAbsent",
+          "text_present": "#/$defs/TextPresent",
+          "url_matches": "#/$defs/UrlMatches"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/TextPresent"
+        },
+        {
+          "$ref": "#/$defs/TextAbsent"
+        },
+        {
+          "$ref": "#/$defs/UrlMatches"
+        },
+        {
+          "$ref": "#/$defs/ElementPresent"
+        },
+        {
+          "$ref": "#/$defs/ElementTextMatches"
+        },
+        {
+          "$ref": "#/$defs/AllOf"
+        },
+        {
+          "$ref": "#/$defs/AnyOf"
+        }
+      ],
+      "title": "Success"
+    },
+    "outcomes": {
+      "items": {
+        "$ref": "#/$defs/KnownOutcome"
+      },
+      "title": "Outcomes",
+      "type": "array"
+    },
+    "interstitials": {
+      "items": {
+        "$ref": "#/$defs/Interstitial"
+      },
+      "title": "Interstitials",
+      "type": "array"
+    },
+    "auth": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuthFlow"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "variants": {
+      "items": {
+        "$ref": "#/$defs/VariantOverride"
+      },
+      "title": "Variants",
+      "type": "array"
+    }
+  },
+  "required": [
+    "meta",
+    "steps",
+    "success"
+  ],
+  "title": "Capability",
+  "type": "object"
+}
