@@ -204,10 +204,14 @@ async def h_review(req: Request, m: str = Form(""), p1: str = Form(""), p2: str 
 
 
 @app.post(f"{H}/newacct/submit")
-async def h_submit(m: str = Form("")):
+async def h_submit(req: Request, m: str = Form("")):
     """Irreversible: the agent must never reach this without human approval."""
+    if (r := await gate(req, f"{H}/login")):
+        return r
     STATE["submitted"].append(m)
-    return page(h_wrap("<b>Application submitted.</b> Reference SA-90211."))
+    ref = f"SA-{90210 + len(STATE['submitted'])}"
+    return page(h_wrap(f"<b>Application submitted.</b><br><table border=1 cellpadding=3>"
+                       f"<tr><td>Reference</td><td>{ref}</td></tr></table>"))
 
 
 # ───────────────────────── Nova Bank (modern skin, same product) ─────────────────────────

@@ -33,12 +33,14 @@ class FailureCategory(str, Enum):
     session_expired_unrecoverable = "session_expired_unrecoverable"
     policy_blocked = "policy_blocked"
     unexpected_state = "unexpected_state"
+    aborted_by_operator = "aborted_by_operator"
 
 
 class RecoveryKind(str, Enum):
     interstitial_dismissed = "interstitial_dismissed"
     retry_transient = "retry_transient"
     reauthenticated = "reauthenticated"
+    human_intervention = "human_intervention"  # an operator approved, retried or performed a step
     locator_fallback = "locator_fallback"  # primary locator missed; a fallback matched: a drift signal
 
 

@@ -1,8 +1,8 @@
 {
   "meta": {
-    "id": "memberserv.lookup_member",
-    "name": "Look up a member and read their savings balance",
-    "description": "Signs in if needed, searches a member number, returns the savings balance.",
+    "id": "memberserv.open_subaccount",
+    "name": "Open a sub-account for a member",
+    "description": "Finds the member, fills the new sub-account form, checks the review screen, then submits. Submitting is irreversible and needs a human's approval on every run.",
     "schema_version": "1",
     "version": "1.0.0",
     "status": "approved",
@@ -18,20 +18,48 @@
       "required": true,
       "pattern": "[0-9A-Za-z-]{1,20}",
       "sensitive": false
+    },
+    {
+      "name": "product",
+      "type": "enum",
+      "description": "Type of sub-account to open.",
+      "required": true,
+      "enum": [
+        "Savings",
+        "Checking",
+        "Money Market"
+      ],
+      "sensitive": false
+    },
+    {
+      "name": "opening_deposit",
+      "type": "money",
+      "description": "Opening deposit in USD (minimum $25).",
+      "required": true,
+      "sensitive": false
+    },
+    {
+      "name": "nickname",
+      "type": "string",
+      "description": "Optional label shown to the member.",
+      "required": false,
+      "default": "",
+      "pattern": "[\\w .'-]{0,30}",
+      "sensitive": false
     }
   ],
   "outputs": [
     {
-      "name": "savings_balance",
+      "name": "review_deposit",
       "type": "money",
-      "description": "Current savings balance in USD.",
+      "description": "Deposit amount as confirmed on the review screen.",
       "sensitive": false
     },
     {
-      "name": "member_name",
+      "name": "reference",
       "type": "string",
-      "description": "Member's full name.",
-      "sensitive": true
+      "description": "Application reference from the confirmation.",
+      "sensitive": false
     }
   ],
   "preconditions": [],
@@ -156,8 +184,180 @@
       ]
     },
     {
-      "id": "read_balance",
-      "intent": "Read the Savings row balance",
+      "id": "open_new_subaccount",
+      "intent": "Open the New Sub-Account form",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "text",
+            "params": {
+              "text": "New Sub-Account"
+            },
+            "robustness": "medium",
+            "why": "A clickable <span>, not a link: visible text is the only handle."
+          }
+        ]
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Open Sub-Account",
+          "frame": "m"
+        }
+      ]
+    },
+    {
+      "id": "choose_product",
+      "intent": "Choose the product type",
+      "action": "select",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Product Type"
+            },
+            "robustness": "medium",
+            "why": "Adjacent label."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "p1"
+            },
+            "robustness": "medium",
+            "why": "Stable field name."
+          }
+        ],
+        "expect_tag": "select"
+      },
+      "value": {
+        "param": "product"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "enter_deposit",
+      "intent": "Enter the opening deposit",
+      "action": "type",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Opening Deposit"
+            },
+            "robustness": "medium",
+            "why": "Adjacent label."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "p2"
+            },
+            "robustness": "medium",
+            "why": "Stable field name."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "value": {
+        "param": "opening_deposit"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "enter_nickname",
+      "intent": "Enter the nickname",
+      "action": "type",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "label_text",
+            "params": {
+              "text": "Nickname"
+            },
+            "robustness": "medium",
+            "why": "Adjacent label."
+          },
+          {
+            "kind": "attr",
+            "params": {
+              "attr": "name",
+              "value": "p3"
+            },
+            "robustness": "medium",
+            "why": "Stable field name."
+          }
+        ],
+        "expect_tag": "input"
+      },
+      "value": {
+        "param": "nickname"
+      },
+      "parse": "text",
+      "risk": "safe",
+      "pre": [],
+      "post": []
+    },
+    {
+      "id": "continue_to_review",
+      "intent": "Continue to the review screen",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "role",
+            "params": {
+              "role": "button",
+              "name": "Continue"
+            },
+            "robustness": "high",
+            "why": "Button by name."
+          }
+        ]
+      },
+      "parse": "text",
+      "risk": "risky",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Review Sub-Account Application",
+          "frame": "m"
+        }
+      ]
+    },
+    {
+      "id": "read_review_deposit",
+      "intent": "Read the deposit shown for review",
       "action": "read",
       "target": {
         "frame_path": [
@@ -167,23 +367,54 @@
           {
             "kind": "table_cell",
             "params": {
-              "row_text": "Savings",
-              "col": 2
+              "row_text": "Deposit",
+              "col": 1
             },
             "robustness": "medium",
-            "why": "Row is found by its product label, so row order can change."
+            "why": "Row found by its label."
           }
         ]
       },
-      "output": "savings_balance",
+      "output": "review_deposit",
       "parse": "money",
       "risk": "safe",
       "pre": [],
       "post": []
     },
     {
-      "id": "read_name",
-      "intent": "Read the member's name",
+      "id": "submit_application",
+      "intent": "Submit the application",
+      "action": "click",
+      "target": {
+        "frame_path": [
+          "m"
+        ],
+        "locators": [
+          {
+            "kind": "role",
+            "params": {
+              "role": "button",
+              "name": "Submit Application"
+            },
+            "robustness": "high",
+            "why": "Button by name."
+          }
+        ]
+      },
+      "parse": "text",
+      "risk": "irreversible",
+      "pre": [],
+      "post": [
+        {
+          "kind": "text_present",
+          "text": "Application submitted",
+          "frame": "m"
+        }
+      ]
+    },
+    {
+      "id": "read_reference",
+      "intent": "Read the application reference",
       "action": "read",
       "target": {
         "frame_path": [
@@ -193,15 +424,15 @@
           {
             "kind": "table_cell",
             "params": {
-              "row_text": "Name",
+              "row_text": "Reference",
               "col": 1
             },
             "robustness": "medium",
-            "why": "Row found by its 'Name' label."
+            "why": "Row found by its label."
           }
         ]
       },
-      "output": "member_name",
+      "output": "reference",
       "parse": "text",
       "risk": "safe",
       "pre": [],
@@ -209,19 +440,9 @@
     }
   ],
   "success": {
-    "kind": "all_of",
-    "conditions": [
-      {
-        "kind": "text_present",
-        "text": "Member {{member_id}}",
-        "frame": "m"
-      },
-      {
-        "kind": "text_present",
-        "text": "Savings",
-        "frame": "m"
-      }
-    ]
+    "kind": "text_present",
+    "text": "Application submitted",
+    "frame": "m"
   },
   "outcomes": [
     {
@@ -252,6 +473,26 @@
       "detected_by": {
         "kind": "text_present",
         "text": "must be numeric",
+        "frame": "m"
+      },
+      "returns": {}
+    },
+    {
+      "code": "deposit_below_minimum",
+      "description": "The opening deposit is under the $25 minimum.",
+      "detected_by": {
+        "kind": "text_present",
+        "text": "Minimum opening deposit",
+        "frame": "m"
+      },
+      "returns": {}
+    },
+    {
+      "code": "deposit_not_a_number",
+      "description": "The app could not read the deposit amount.",
+      "detected_by": {
+        "kind": "text_present",
+        "text": "must be a number",
         "frame": "m"
       },
       "returns": {}
@@ -387,200 +628,5 @@
       "frame": "m"
     }
   },
-  "variants": [
-    {
-      "variant": "nova",
-      "targets": {
-        "enter_member": {
-          "frame_path": [],
-          "locators": [
-            {
-              "kind": "role",
-              "params": {
-                "role": "textbox",
-                "name": "Customer ID"
-              },
-              "robustness": "high",
-              "why": "Labelled textbox."
-            }
-          ],
-          "expect_tag": "input"
-        },
-        "submit_search": {
-          "frame_path": [],
-          "locators": [
-            {
-              "kind": "role",
-              "params": {
-                "role": "button",
-                "name": "Look up"
-              },
-              "robustness": "high",
-              "why": "Button by name."
-            }
-          ]
-        },
-        "read_balance": {
-          "frame_path": [],
-          "locators": [
-            {
-              "kind": "table_cell",
-              "params": {
-                "row_text": "Savings",
-                "col": 2
-              },
-              "robustness": "medium",
-              "why": "Row found by product label."
-            }
-          ]
-        },
-        "read_name": {
-          "frame_path": [],
-          "locators": [
-            {
-              "kind": "role",
-              "params": {
-                "role": "heading",
-                "name": ".+"
-              },
-              "robustness": "high",
-              "why": "Page heading holds the name."
-            }
-          ]
-        }
-      },
-      "values": {
-        "open_app": {
-          "literal": "/nova/customers"
-        }
-      },
-      "posts": {
-        "submit_search": [
-          {
-            "kind": "text_present",
-            "text": "Current balance"
-          }
-        ]
-      },
-      "skip_steps": [
-        "open_inquiry"
-      ],
-      "outcome_detectors": {
-        "member_not_found": {
-          "kind": "text_present",
-          "text": "Customer not found"
-        },
-        "permission_denied": {
-          "kind": "text_present",
-          "text": "do not have permission"
-        },
-        "invalid_member_number": {
-          "kind": "text_present",
-          "text": "Enter a numeric Customer ID"
-        }
-      },
-      "success": {
-        "kind": "all_of",
-        "conditions": [
-          {
-            "kind": "text_present",
-            "text": "Current balance"
-          },
-          {
-            "kind": "text_present",
-            "text": "Savings"
-          }
-        ]
-      },
-      "auth": {
-        "steps": [
-          {
-            "id": "auth.user",
-            "intent": "Enter username",
-            "action": "type",
-            "target": {
-              "frame_path": [],
-              "locators": [
-                {
-                  "kind": "role",
-                  "params": {
-                    "role": "textbox",
-                    "name": "Username"
-                  },
-                  "robustness": "high",
-                  "why": "Labelled textbox."
-                }
-              ],
-              "expect_tag": "input"
-            },
-            "value": {
-              "secret_env": "HERITAGE_USER"
-            },
-            "parse": "text",
-            "risk": "safe",
-            "pre": [],
-            "post": []
-          },
-          {
-            "id": "auth.pass",
-            "intent": "Enter password",
-            "action": "type",
-            "target": {
-              "frame_path": [],
-              "locators": [
-                {
-                  "kind": "label_text",
-                  "params": {
-                    "text": "Password"
-                  },
-                  "robustness": "high",
-                  "why": "Adjacent label."
-                }
-              ],
-              "expect_tag": "input"
-            },
-            "value": {
-              "secret_env": "HERITAGE_PASS"
-            },
-            "parse": "text",
-            "risk": "safe",
-            "pre": [],
-            "post": []
-          },
-          {
-            "id": "auth.submit",
-            "intent": "Sign in",
-            "action": "click",
-            "target": {
-              "frame_path": [],
-              "locators": [
-                {
-                  "kind": "role",
-                  "params": {
-                    "role": "button",
-                    "name": "Sign in"
-                  },
-                  "robustness": "high",
-                  "why": "Button by name."
-                }
-              ]
-            },
-            "parse": "text",
-            "risk": "safe",
-            "pre": [],
-            "post": []
-          }
-        ],
-        "logged_in_when": {
-          "kind": "text_present",
-          "text": "Customer ID"
-        },
-        "session_expired_when": {
-          "kind": "text_present",
-          "text": "Sign in"
-        }
-      },
-      "note": "Modern skin: semantic roles, route-based navigation, different wording."
-    }
-  ]
+  "variants": []
 }

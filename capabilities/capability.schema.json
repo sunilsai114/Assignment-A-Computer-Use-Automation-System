@@ -316,6 +316,19 @@
         },
         "dismiss": {
           "$ref": "#/$defs/Step"
+        },
+        "resume_from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Main-step id to continue from after dismissing (default: retry the current step). Needed when dismissing loses page state, e.g. the dialog replaces the results page.",
+          "title": "Resume From"
         }
       },
       "required": [
@@ -993,6 +1006,51 @@
           },
           "description": "step id -> replacement value (e.g. route)",
           "title": "Values",
+          "type": "object"
+        },
+        "posts": {
+          "additionalProperties": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "all_of": "#/$defs/AllOf",
+                  "any_of": "#/$defs/AnyOf",
+                  "element_present": "#/$defs/ElementPresent",
+                  "element_text_matches": "#/$defs/ElementTextMatches",
+                  "text_absent": "#/$defs/TextAbsent",
+                  "text_present": "#/$defs/TextPresent",
+                  "url_matches": "#/$defs/UrlMatches"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/TextPresent"
+                },
+                {
+                  "$ref": "#/$defs/TextAbsent"
+                },
+                {
+                  "$ref": "#/$defs/UrlMatches"
+                },
+                {
+                  "$ref": "#/$defs/ElementPresent"
+                },
+                {
+                  "$ref": "#/$defs/ElementTextMatches"
+                },
+                {
+                  "$ref": "#/$defs/AllOf"
+                },
+                {
+                  "$ref": "#/$defs/AnyOf"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "description": "step id -> replacement checkpoints",
+          "title": "Posts",
           "type": "object"
         },
         "skip_steps": {

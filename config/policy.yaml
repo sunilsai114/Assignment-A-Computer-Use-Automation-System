@@ -15,7 +15,7 @@ redact:
   ssn: '\b\d{3}-\d{2}-\d{4}\b'
   email: '[\w.+-]+@[\w-]+\.[\w.]+'
   phone: '\b\(?\d{3}\)?[-. ]?\d{3}[-. ]\d{4}\b'
-  account_number: '\b\d{8,17}\b'
+  account_number: '(?<![\w-])\d{8,17}(?![\w-])'   # not ids like run-12345678
   secret_field_names: [password, passwd, pin, token, api_key, passcode]
 
 limits:
@@ -23,4 +23,6 @@ limits:
   run_timeout_s: 120
   action_timeout_ms: 8000
   max_interstitials: 3
+  max_handoffs: 3
+  handoff_timeout_s: 300   # how long a paused run waits for an operator to claim it
   max_reauths: 2   # one for the initial sign-in of a cold session + one for a mid-run expiry

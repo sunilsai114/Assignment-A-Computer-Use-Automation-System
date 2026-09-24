@@ -5,7 +5,7 @@ description = "Computer-use automation: discover with an LLM, replay determinist
 requires-python = ">=3.11"
 dependencies = [
   "playwright", "pydantic>=2", "pydantic-settings", "typer", "fastapi",
-  "uvicorn[standard]", "python-multipart", "google-genai", "pyyaml", "httpx",
+  "uvicorn[standard]", "python-multipart", "google-genai", "pyyaml", "httpx", "python-dotenv",
 ]
 
 [project.scripts]

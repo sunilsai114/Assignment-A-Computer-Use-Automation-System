@@ -24,7 +24,7 @@ async def test_success_returns_typed_outputs(replay, cap):
     r = await replay(cap, {"member_id": "12345"})
     assert r.status == Status.SUCCESS, r.failure
     assert r.outputs == {"savings_balance": "4821.37", "member_name": "Jordan Rivera"}
-    assert RK.reauthenticated in kinds(r)  # fresh session: first run signs in via the auth sub-flow
+    assert r.recoveries == []  # a cold-session sign-in is the normal start, not a recovery
 
 
 async def test_replay_is_deterministic(replay, cap):

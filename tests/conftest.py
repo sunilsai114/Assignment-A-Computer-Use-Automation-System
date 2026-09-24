@@ -1,12 +1,15 @@
-import os
+import asyncio
 import threading
 import time
+from types import SimpleNamespace
 
 import httpx
 import pytest
 import uvicorn
 from playwright.async_api import async_playwright
 
+from cua.handoff.controller import SessionController
+from cua.handoff.intervention import InterventionStore
 from cua.policy.engine import Policy
 from cua.replay.engine import Replayer
 from cua.surface.web import WebSurface
@@ -52,19 +55,37 @@ def policy():
 
 
 @pytest.fixture
-async def replay(server, policy, tmp_path):
-    """Returns run(cap, inputs, variant=None, approvals=()) using a fresh browser session each call."""
+async def browser():
     pw = await async_playwright().start()
-    browser = await pw.chromium.launch()
-    surfaces = []
+    b = await pw.chromium.launch()
+    yield b
+    await b.close()
+    await pw.stop()
 
+
+@pytest.fixture
+async def replay(server, policy, tmp_path, browser):
+    """Unattended replay: run(cap, inputs, ...) on a fresh browser session each call."""
     async def run(cap, inputs, variant=None, approvals=(), secrets=None):
         surface = await WebSurface.open(browser, server, policy)
-        surfaces.append(surface)
         r = Replayer(surface, policy, runs_dir=tmp_path, approvals=frozenset(approvals),
                      **({"secrets": secrets} if secrets is not None else {}))
         return await r.run(cap, inputs, variant)
 
-    yield run
-    await browser.close()
-    await pw.stop()
+    return run
+
+
+@pytest.fixture
+async def attended(server, policy, tmp_path, browser):
+    """Attended replay on one live session with a SessionController. `run` returns a Task so the test can
+    play the operator while the replay is paused."""
+    surface = await WebSurface.open(browser, server, policy)
+    ctrl = SessionController(InterventionStore(tmp_path), policy.redactor)
+    await ctrl.attach(surface)
+
+    def run(cap, inputs, timeout=15.0, approvals=()):
+        r = Replayer(surface, policy, runs_dir=tmp_path, controller=ctrl, handoff_timeout_s=timeout,
+                     approvals=frozenset(approvals))
+        return asyncio.create_task(r.run(cap, inputs))
+
+    return SimpleNamespace(surface=surface, ctrl=ctrl, run=run)

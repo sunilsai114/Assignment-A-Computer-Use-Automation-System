@@ -27,6 +27,7 @@ class WebSurface:
         self.blocked: list[str] = []
         self._inflight = 0
         self.context = self.page = None
+        self.controller = None  # set by SessionController.attach(); gates every mutating action
 
     @classmethod
     async def open(cls, browser: Browser, base_url: str, policy: Policy) -> "WebSurface":
@@ -44,6 +45,10 @@ class WebSurface:
     async def close(self) -> None:
         await self.context.close()
 
+    def alive(self) -> bool:
+        """False once the page, context or browser is gone (e.g. someone closed the window)."""
+        return self.page is not None and not self.page.is_closed() and self.browser.is_connected()
+
     # ── guards & bookkeeping ──
     async def _guard(self, route) -> None:
         d = self.policy.check_url(route.request.url)
@@ -60,8 +65,24 @@ class WebSurface:
     def reset_status(self) -> None:
         self.last_status = None
 
+    def _guard_control(self) -> None:
+        if self.controller is not None:
+            self.controller.assert_automation()
+
+    async def install_human_recorder(self, callback) -> None:
+        """Capture what a human does in this live session (every frame). `callback(payload, frame=name)`."""
+        await self.context.expose_binding(
+            "__cuaHuman", lambda source, payload: callback(payload, frame=source["frame"].name))
+        await self.context.add_init_script(HUMAN_RECORDER_JS)
+        for f in self.page.frames:  # frames already loaded before install
+            try:
+                await f.evaluate(HUMAN_RECORDER_JS)
+            except PlaywrightError:
+                pass
+
     # ── navigation / state ──
     async def goto(self, url: str) -> None:
+        self._guard_control()
         full = urljoin(self.base_url, url)
         if (d := self.policy.check_url(full)).blocked:
             raise NavigationBlocked(d.reason)
@@ -170,12 +191,15 @@ class WebSurface:
             raise SurfaceError(str(e).splitlines()[0]) from e
 
     async def click(self, target: Target) -> None:
+        self._guard_control()
         await self._do((await self._resolve(target)).click(timeout=3000))
 
     async def fill(self, target: Target, text: str) -> None:
+        self._guard_control()
         await self._do((await self._resolve(target)).fill(text, timeout=3000))
 
     async def select(self, target: Target, value: str) -> None:
+        self._guard_control()
         await self._do((await self._resolve(target)).select_option(label=value, timeout=3000))
 
     async def read(self, target: Target) -> str:
@@ -203,3 +227,30 @@ class WebSurface:
             except PlaywrightError:
                 pass
         return "\n".join(parts)
+
+
+# Injected into every frame. Describes controls the way the artifact does (label/role text), never by
+# position, so a human's actions can later be turned into steps. Password values never leave the page.
+HUMAN_RECORDER_JS = r"""
+(() => {
+  if (window.__cuaRecorder) return; window.__cuaRecorder = true;
+  const clean = s => (s || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  const describe = el => {
+    const lab = el.labels && el.labels[0] ? el.labels[0].innerText : '';
+    const cell = el.closest && el.closest('td');
+    const adj = cell && cell.previousElementSibling ? cell.previousElementSibling.innerText : '';
+    return clean(el.getAttribute('aria-label') || lab || adj || el.value || el.innerText);
+  };
+  const send = (kind, el, extra) => {
+    try { window.__cuaHuman({kind, tag: el.tagName.toLowerCase(), name: el.getAttribute('name'),
+      type: el.getAttribute('type'), text: describe(el), path: location.pathname, ...extra}); } catch (e) {}
+  };
+  document.addEventListener('click', e => {
+    const el = e.target.closest('a,button,input,select,[onclick]') || e.target; send('click', el, {});
+  }, true);
+  document.addEventListener('change', e => {
+    const el = e.target; const secret = (el.type || '').toLowerCase() === 'password';
+    send('input', el, {value: secret ? '●●●●' : String(el.value).slice(0, 200)});
+  }, true);
+})();
+"""

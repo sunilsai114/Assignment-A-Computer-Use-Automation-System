@@ -8,6 +8,9 @@ is not (yet) met:
     4. SESSION expired             -> re-authenticate once, restart the flow (state was lost)
     5. otherwise keep polling until the step deadline, then FAILED with expected-vs-observed.
 Irreversible steps never run unattended: they yield NEEDS_HUMAN unless explicitly pre-approved.
+
+Attended mode (a SessionController is attached): instead of ending on NEEDS_HUMAN or on a failure a person
+could fix, the run pauses on the same live session and waits for an operator (see cua/handoff/controller.py).
 """
 import asyncio
 import os
@@ -19,6 +22,7 @@ from pathlib import Path
 from typing import Mapping
 
 from cua.evidence.recorder import EvidenceRecorder
+from cua.handoff.controller import SessionController
 from cua.handoff.intervention import InterventionStore
 from cua.policy.engine import Policy
 from cua.policy.redact import MASK
@@ -46,17 +50,24 @@ class _Run:
         self.steps_executed = 0
         self.dismissals = 0
         self.reauths = 0
+        self.signed_in = False
+        self.handoffs = 0
+        self.approved: set[str] = set()  # steps a human approved during this run only
         self.t0 = time.monotonic()
+        self.deadline = self.t0  # set in run(); pushed back by time spent waiting on a human
 
 
 class Replayer:
     def __init__(self, surface, policy: Policy, runs_dir: Path = Path("runs"),
-                 secrets: Mapping[str, str] | None = None, approvals: frozenset[str] = frozenset()):
+                 secrets: Mapping[str, str] | None = None, approvals: frozenset[str] = frozenset(),
+                 controller: SessionController | None = None, handoff_timeout_s: float | None = None):
         self.surface, self.policy = surface, policy
         self.runs_dir = Path(runs_dir)
         self.secrets = secrets if secrets is not None else os.environ
         self.approvals = approvals
-        self.interventions = InterventionStore(self.runs_dir)
+        self.controller = controller
+        self.handoff_timeout_s = handoff_timeout_s or policy.limits["handoff_timeout_s"]
+        self.interventions = controller.store if controller else InterventionStore(self.runs_dir)
 
     # ───────────────────────── public entry ─────────────────────────
     async def run(self, cap: Capability, inputs: dict, variant: str | None = None) -> ReplayResult:
@@ -73,10 +84,9 @@ class Replayer:
                     observed=str(e).strip("'\""))))
         rec.log("run_start", capability=st.cap.meta.id, version=st.cap.meta.version,
                 variant=st.cap.meta.variant, inputs=self._loggable_inputs(st))
+        st.deadline = time.monotonic() + self.policy.limits["run_timeout_s"]
         try:
-            res = await asyncio.wait_for(self._execute(st), self.policy.limits["run_timeout_s"])
-        except asyncio.TimeoutError:
-            res = await self._fail(st, None, FC.timeout, f"run within {self.policy.limits['run_timeout_s']}s", "run timed out")
+            res = await self._execute(st)
         except Exception as e:  # noqa: BLE001  a bug must surface as a debuggable failure, never a crash
             res = await self._fail(st, None, FC.unexpected_state, "no internal error", f"{type(e).__name__}: {e}")
         return self._finish(st, res)
@@ -116,10 +126,11 @@ class Replayer:
             step_id=step.id if step else None, category=cat, expected=expected,
             observed=self.policy.redactor.text(observed), evidence_ref=ref))
 
-    async def _needs_human(self, st: _Run, step: Step, reason: str) -> ReplayResult:
+    async def _needs_human(self, st: _Run, step: Step, reason: str, kind: str = "approval") -> ReplayResult:
         ref = await self._evidence(st, f"intervention-{step.id}")
-        iv = self.interventions.create(run_id=st.run_id, capability_id=st.cap.meta.id, step_id=step.id,
-                                       reason=reason, url=await self.surface.url(), screenshot=ref)
+        iv = self.interventions.create(run_id=st.run_id, capability_id=st.cap.meta.id, step_id=step.id, kind=kind,
+                                       reason=reason, url=await self.surface.url(), screenshot=ref,
+                                       evidence_dir=str(st.rec.dir))
         st.rec.log("needs_human", step=step.id, reason=reason, intervention=iv.id)
         return self._result(st, Status.NEEDS_HUMAN, intervention_id=iv.id)
 
@@ -139,9 +150,16 @@ class Replayer:
             budget -= 1
             if budget < 0:
                 return await self._fail(st, None, FC.unexpected_state, "flow to finish within step budget", "step budget exhausted")
+            if time.monotonic() > st.deadline:
+                return await self._fail(st, steps[i], FC.timeout, f"run to finish within {self.policy.limits['run_timeout_s']}s "
+                                        "(time waiting on a human excluded)", "run deadline passed")
             nxt = await self._step(st, steps, i)
             if isinstance(nxt, ReplayResult):
-                return nxt
+                if not self._escalatable(nxt):
+                    return nxt
+                nxt = await self._handoff(st, steps, i, nxt)
+                if isinstance(nxt, ReplayResult):
+                    return nxt
             i = nxt
         deadline = time.monotonic() + self.policy.limits["action_timeout_ms"] / 1000
         while not await holds(st.cap.success, self.surface, st.params):
@@ -245,7 +263,7 @@ class Replayer:
         verdict = self.policy.check_step(step, await s.url())
         if verdict.blocked:
             return await self._fail(st, step, FC.policy_blocked, "action permitted by policy", verdict.reason)
-        if verdict.needs_approval and step.id not in self.approvals:
+        if verdict.needs_approval and step.id not in self.approvals and step.id not in st.approved:
             return await self._needs_human(st, step, verdict.reason)
         for c in step.pre:
             if not await holds(c, s, st.params):
@@ -346,10 +364,89 @@ class Replayer:
                     # The session can die again right after sign-in (it did on the landing page). Restart
                     # the flow: the next unmet step re-detects expiry and spends the remaining budget.
                     st.rec.log("reauth_not_confirmed", step=step.id, attempt=st.reauths)
+                    st.signed_in = True  # we did sign in; losing it again is a real recovery
                     return 0
                 return await self._fail(st, step, FC.session_expired_unrecoverable,
                                         describe(auth.logged_in_when, st.params), await self._observed())
             await asyncio.sleep(POLL_S)
-        self._recover(st, RK.reauthenticated, step.id, "session had expired; signed in again and restarted the flow")
+        if st.signed_in:
+            self._recover(st, RK.reauthenticated, step.id, "session was lost; signed in again and restarted the flow")
+        else:  # a cold session needing a sign-in is the normal start, not a recovery
+            st.rec.log("signed_in", step=step.id)
+        st.signed_in = True
         st.outputs.clear()
         return 0
+
+    # ───────────────────────── human handoff ─────────────────────────
+    # Failures a person can plausibly fix in the live session. Deliberately excluded: bad input (the caller's
+    # problem), policy blocks (a human must not override the allowlist), app errors (retrying could
+    # double-apply a write) and run timeouts.
+    HUMAN_FIXABLE = {FC.target_not_found, FC.checkpoint_mismatch, FC.unexpected_state, FC.precondition,
+                     FC.session_expired_unrecoverable}
+
+    def _escalatable(self, res: ReplayResult) -> bool:
+        if self.controller is None:
+            return False
+        if res.status == Status.NEEDS_HUMAN:
+            return True
+        return (res.status == Status.FAILED and res.failure.category in self.HUMAN_FIXABLE
+                and res.failure.step_id is not None)
+
+    async def _handoff(self, st: _Run, steps: list[Step], i: int, res: ReplayResult) -> int | ReplayResult:
+        step = steps[i]
+        if st.handoffs >= self.policy.limits["max_handoffs"]:
+            st.rec.log("handoff_limit", step=step.id)
+            return res
+        st.handoffs += 1
+        if res.status == Status.NEEDS_HUMAN:
+            iv = self.interventions.load(res.intervention_id)
+        else:
+            f = res.failure
+            iv = self.interventions.create(
+                run_id=st.run_id, capability_id=st.cap.meta.id, step_id=f.step_id, kind="stuck",
+                reason=f"{f.category.value}: expected {f.expected}; observed {f.observed}"[:500],
+                url=await self.surface.url(), screenshot=f.evidence_ref, evidence_dir=str(st.rec.dir))
+        st.rec.log("handoff_requested", intervention=iv.id, kind=iv.kind, step=step.id, reason=iv.reason)
+        waited_from = time.monotonic()
+        decision = await self.controller.escalate(iv, self.handoff_timeout_s)
+        st.deadline += time.monotonic() - waited_from
+        if decision is None:
+            st.rec.log("handoff_expired", intervention=iv.id)
+            if res.status == Status.FAILED:
+                res.intervention_id = iv.id
+            return res
+        saved = self.interventions.load(iv.id)
+        st.rec.log("handoff_resolved", intervention=iv.id, action=decision.action, operator=decision.operator,
+                   human_actions=len(saved.human_actions))
+        if decision.action == "session_lost":
+            st.rec.log("failure", step=step.id, category=FC.unexpected_state.value, observed=decision.note)
+            return self._result(st, Status.FAILED, intervention_id=iv.id, failure=Failure(
+                step_id=step.id, category=FC.unexpected_state, expected="the live session to survive the handoff",
+                observed=decision.note, evidence_ref=iv.screenshot))
+        await self._evidence(st, f"handback-{step.id}")
+        if decision.action == "abort":
+            return await self._fail(st, step, FC.aborted_by_operator, "operator to hand control back",
+                                    f"aborted by {decision.operator}: {decision.note or 'no reason given'}")
+        self._recover(st, RK.human_intervention, step.id,
+                      f"{decision.action} by {decision.operator}; {len(saved.human_actions)} human action(s) recorded")
+        if decision.action == "approve":
+            st.approved.add(step.id)
+            return i
+        if decision.action == "retry":
+            return i
+        # skip: the human says they did this step. Verify rather than trust.
+        await self.surface.settle(self.policy.limits["action_timeout_ms"])
+        deadline = time.monotonic() + self.policy.limits["action_timeout_ms"] / 1000
+        while not all([await holds(c, self.surface, st.params) for c in step.post]):
+            if time.monotonic() > deadline:
+                return await self._fail(st, step, FC.checkpoint_mismatch,
+                                        "after human handoff: " + " AND ".join(describe(c, st.params) for c in step.post),
+                                        await self._observed())
+            await asyncio.sleep(POLL_S)
+        if step.output:  # the human did the step but the value is still needed
+            try:
+                await self._act(st, step)
+            except SurfaceError as e:
+                return await self._fail(st, step, FC.target_not_found, f"output '{step.output}' readable after handoff", str(e))
+        st.rec.log("step_ok", step=step.id, by=decision.operator)
+        return i + 1
