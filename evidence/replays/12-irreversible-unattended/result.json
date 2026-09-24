@@ -1,0 +1,16 @@
+{
+  "status": "NEEDS_HUMAN",
+  "capability_id": "memberserv.open_subaccount",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-4a03c44f",
+  "started_at": "2026-09-24T02:27:04.574943Z",
+  "duration_ms": 4773,
+  "steps_executed": 12,
+  "outputs": {},
+  "outcome": null,
+  "failure": null,
+  "intervention_id": "iv-2ddbb246",
+  "recoveries": [],
+  "evidence_dir": ".\\run-4a03c44f"
+}

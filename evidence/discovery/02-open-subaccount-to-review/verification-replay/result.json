@@ -1,0 +1,16 @@
+{
+  "status": "SUCCESS",
+  "capability_id": "memberserv.open_subaccount_discovered",
+  "capability_version": "0.1.0",
+  "variant": "heritage",
+  "run_id": "run-edb77a06",
+  "started_at": "2026-09-24T02:15:04.403296Z",
+  "duration_ms": 3647,
+  "steps_executed": 8,
+  "outputs": {},
+  "outcome": null,
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-edb77a06"
+}

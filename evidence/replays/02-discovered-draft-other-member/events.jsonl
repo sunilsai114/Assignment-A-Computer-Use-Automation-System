@@ -1,0 +1,14 @@
+{"ts": "2026-09-24T02:25:40.241+00:00", "event": "run_start", "capability": "memberserv.lookup_member_discovered", "version": "0.1.0", "variant": "heritage", "inputs": {"member_id": "20001"}}
+{"ts": "2026-09-24T02:25:40.241+00:00", "event": "step_start", "step": "open_app", "intent": "Open the application entry point", "action": "navigate", "risk": "safe", "value": "/heritage/"}
+{"ts": "2026-09-24T02:25:40.523+00:00", "event": "step_ok", "step": "open_app"}
+{"ts": "2026-09-24T02:25:40.524+00:00", "event": "step_start", "step": "enter_member_number", "intent": "Enter member number {{member_id}}", "action": "type", "risk": "safe", "value": "20001"}
+{"ts": "2026-09-24T02:25:40.573+00:00", "event": "target_miss", "step": "enter_member_number", "detail": "label_text {'text': 'Member Number'}: 0 matches; attr {'attr': 'name', 'value': 'f1'}: 0 matches", "url": "http://127.0.0.1:8010/heritage/"}
+{"ts": "2026-09-24T02:25:42.453+00:00", "event": "signed_in", "step": "enter_member_number"}
+{"ts": "2026-09-24T02:25:42.454+00:00", "event": "step_start", "step": "enter_member_number", "intent": "Enter member number {{member_id}}", "action": "type", "risk": "safe", "value": "20001"}
+{"ts": "2026-09-24T02:25:42.676+00:00", "event": "step_ok", "step": "enter_member_number"}
+{"ts": "2026-09-24T02:25:42.677+00:00", "event": "step_start", "step": "click_go_to_search_for_member", "intent": "Click Go to search for member {{member_id}}", "action": "click", "risk": "safe", "value": null}
+{"ts": "2026-09-24T02:25:42.900+00:00", "event": "step_ok", "step": "click_go_to_search_for_member"}
+{"ts": "2026-09-24T02:25:42.901+00:00", "event": "step_start", "step": "read_savings_balance", "intent": "read savings balance", "action": "read", "risk": "safe", "value": null}
+{"ts": "2026-09-24T02:25:43.111+00:00", "event": "step_ok", "step": "read_savings_balance"}
+{"ts": "2026-09-24T02:25:43.112+00:00", "event": "success", "outputs": ["savings_balance"]}
+{"ts": "2026-09-24T02:25:43.114+00:00", "event": "run_end", "status": "SUCCESS"}

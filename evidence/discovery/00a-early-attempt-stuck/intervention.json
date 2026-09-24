@@ -1,0 +1,17 @@
+{
+  "id": "iv-35e9c748",
+  "run_id": "disc-e3f6676d",
+  "capability_id": "memberserv.lookup_member_discovered",
+  "step_id": null,
+  "reason": "repeating the same action on the same screen without progress",
+  "url": "http://127.0.0.1:8010/heritage/",
+  "screenshot": "escalation-04.png",
+  "kind": "stuck",
+  "evidence_dir": ".\\disc-e3f6676d",
+  "state": "open",
+  "claimed_by": null,
+  "decision": null,
+  "created_at": "2026-09-24T02:10:32.647+00:00",
+  "control_log": [],
+  "human_actions": []
+}

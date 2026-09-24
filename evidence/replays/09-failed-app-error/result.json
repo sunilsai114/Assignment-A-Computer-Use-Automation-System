@@ -1,0 +1,22 @@
+{
+  "status": "FAILED",
+  "capability_id": "memberserv.lookup_member",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-e5e878ea",
+  "started_at": "2026-09-24T02:26:39.497201Z",
+  "duration_ms": 3295,
+  "steps_executed": 6,
+  "outputs": {},
+  "outcome": null,
+  "failure": {
+    "step_id": "submit_search",
+    "category": "app_error",
+    "expected": "a normal application response",
+    "observed": "HTTP 500",
+    "evidence_ref": "failure-submit_search.png"
+  },
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-e5e878ea"
+}

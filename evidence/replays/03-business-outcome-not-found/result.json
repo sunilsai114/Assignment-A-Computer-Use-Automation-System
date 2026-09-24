@@ -1,0 +1,23 @@
+{
+  "status": "BUSINESS_OUTCOME",
+  "capability_id": "memberserv.lookup_member",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-f2b2c7f5",
+  "started_at": "2026-09-24T02:25:48.503978Z",
+  "duration_ms": 3209,
+  "steps_executed": 6,
+  "outputs": {},
+  "outcome": {
+    "code": "member_not_found",
+    "description": "No member matches that number.",
+    "data": {
+      "found": false
+    },
+    "step_id": "submit_search"
+  },
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-f2b2c7f5"
+}

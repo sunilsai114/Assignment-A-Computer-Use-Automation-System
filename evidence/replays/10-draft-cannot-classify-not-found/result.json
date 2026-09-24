@@ -1,0 +1,22 @@
+{
+  "status": "FAILED",
+  "capability_id": "memberserv.lookup_member_discovered",
+  "capability_version": "0.1.0",
+  "variant": "heritage",
+  "run_id": "run-76179156",
+  "started_at": "2026-09-24T02:26:52.188120Z",
+  "duration_ms": 10568,
+  "steps_executed": 3,
+  "outputs": {},
+  "outcome": null,
+  "failure": {
+    "step_id": "click_go_to_search_for_member",
+    "category": "checkpoint_mismatch",
+    "expected": "text 'Member 00000' present in frame 'm'",
+    "observed": "url=http://127.0.0.1:8010/heritage/ text='HERITAGE CREDIT UNION MemberServ v4.2 Member Inquiry Sign Off No records match your request. Back'",
+    "evidence_ref": "failure-click_go_to_search_for_member.png"
+  },
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-76179156"
+}

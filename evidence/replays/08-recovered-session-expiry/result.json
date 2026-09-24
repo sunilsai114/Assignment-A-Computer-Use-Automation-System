@@ -1,0 +1,26 @@
+{
+  "status": "SUCCESS",
+  "capability_id": "memberserv.lookup_member",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-55e787dd",
+  "started_at": "2026-09-24T02:26:33.825493Z",
+  "duration_ms": 13787,
+  "steps_executed": 10,
+  "outputs": {
+    "savings_balance": "4821.37",
+    "member_name": "\u25cf\u25cf\u25cf\u25cf"
+  },
+  "outcome": null,
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [
+    {
+      "kind": "reauthenticated",
+      "step_id": "open_inquiry",
+      "detail": "session was lost; signed in again and restarted the flow",
+      "attempt": 1
+    }
+  ],
+  "evidence_dir": ".\\run-55e787dd"
+}

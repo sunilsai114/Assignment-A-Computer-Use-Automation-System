@@ -1,0 +1,22 @@
+{
+  "status": "FAILED",
+  "capability_id": "memberserv.lookup_member",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-ee628a76",
+  "started_at": "2026-09-24T02:25:55.997544Z",
+  "duration_ms": 0,
+  "steps_executed": 0,
+  "outputs": {},
+  "outcome": null,
+  "failure": {
+    "step_id": null,
+    "category": "invalid_input",
+    "expected": "inputs satisfying the capability contract",
+    "observed": "input 'member_id' does not match [0-9A-Za-z-]{1,20}",
+    "evidence_ref": null
+  },
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-ee628a76"
+}

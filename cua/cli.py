@@ -84,7 +84,8 @@ def replay(
     variant: str | None = typer.Option(None, help="Tenant variant to run, e.g. 'nova'."),
     base_url: str = typer.Option("http://127.0.0.1:8010", help="Where the target app is served."),
     attended: bool = typer.Option(False, help="Pause for an operator instead of stopping on NEEDS_HUMAN."),
-    headed: bool = typer.Option(False, help="Show the browser window (implied by --attended)."),
+    headed: bool | None = typer.Option(None, "--headed/--no-headed",
+                                       help="Show the browser window (default: shown when --attended)."),
     channel: str | None = typer.Option(None, help="Use an installed browser, e.g. 'msedge' or 'chrome'."),
     operator_port: int = typer.Option(8020, help="Operator console port (attended mode)."),
     handoff_timeout: float = typer.Option(300, help="Seconds to wait for an operator to respond."),
@@ -98,7 +99,8 @@ def replay(
         typer.echo(f"'{cap.meta.id}' is a {cap.meta.status}: review and approve it before production use, "
                    "or pass --allow-draft to test it.", err=True)
         raise typer.Exit(EXIT["FAILED"])
-    result = asyncio.run(_replay(cap, parse_inputs(inputs), variant, base_url, attended, headed or attended,
+    result = asyncio.run(_replay(cap, parse_inputs(inputs), variant, base_url, attended,
+                                 attended if headed is None else headed,
                                  channel, operator_port, handoff_timeout, runs_dir))
     sensitive = {o.name for o in cap.outputs if o.sensitive}
     typer.echo(json.dumps(result.for_log(sensitive), indent=2))
@@ -153,6 +155,18 @@ async def _replay(cap, inputs, variant, base_url, attended, headed, channel, ope
                 server.should_exit = True
                 await task
             await browser.close()
+
+
+@app.command()
+def serve(port: int = typer.Option(8030), base_url: str = typer.Option("http://127.0.0.1:8010"),
+          runs_dir: Path = typer.Option(ROOT / "runs")) -> None:
+    """Mission Control: capability catalog, runs and evidence, operator inbox, and the agent-facing tool API."""
+    load_dotenv(ROOT / ".env")
+    import uvicorn
+
+    from cua.console.server import build_app
+    typer.echo(f"Mission Control: http://127.0.0.1:{port}   (target app: {base_url})", err=True)
+    uvicorn.run(build_app(base_url=base_url, runs_dir=runs_dir), host="127.0.0.1", port=port, log_level="warning")
 
 
 def parse_typed(pairs: list[str], with_value: bool) -> dict:

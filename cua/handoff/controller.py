@@ -82,6 +82,14 @@ class SessionController:
             self.store.save(iv)
             self.current, self._decision = None, None
 
+    def assert_human(self, operator: str) -> str:
+        """Gate for remote human input: only the operator who holds the session may drive it."""
+        op = self._op(operator)
+        if self.state != Control.HUMAN or self.holder != op:
+            raise ControlError(f"only the operator holding the session may act (control is {self.state.value}, "
+                               f"held by {self.holder}); take control first")
+        return op
+
     # ── operator side ──
     def claim(self, iv_id: str, operator: str) -> None:
         iv, op = self._open(iv_id), self._op(operator)

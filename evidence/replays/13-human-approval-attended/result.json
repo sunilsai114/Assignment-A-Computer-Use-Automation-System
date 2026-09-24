@@ -1,0 +1,26 @@
+{
+  "status": "SUCCESS",
+  "capability_id": "memberserv.open_subaccount",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-39607df1",
+  "started_at": "2026-09-24T02:27:12.525197Z",
+  "duration_ms": 5649,
+  "steps_executed": 14,
+  "outputs": {
+    "review_deposit": "50.00",
+    "reference": "SA-90211"
+  },
+  "outcome": null,
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [
+    {
+      "kind": "human_intervention",
+      "step_id": "submit_application",
+      "detail": "approve by ops.reviewer; 0 human action(s) recorded",
+      "attempt": 1
+    }
+  ],
+  "evidence_dir": ".\\run-39607df1"
+}

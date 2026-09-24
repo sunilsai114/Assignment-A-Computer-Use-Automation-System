@@ -205,6 +205,22 @@ class WebSurface:
     async def read(self, target: Target) -> str:
         return (await self._do((await self._resolve(target)).inner_text(timeout=3000))).strip()
 
+    # ── human input channel (operator console) ──
+    # Deliberately NOT gated by _guard_control: this is the human's channel. The caller must have checked
+    # controller.assert_human(). Real input events, so the human recorder captures them like any other.
+    HUMAN_KEYS = {"Enter", "Tab", "Backspace", "Delete", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"}
+
+    async def human_click(self, x: float, y: float) -> None:
+        await self.page.mouse.click(x, y)
+
+    async def human_type(self, text: str) -> None:
+        await self.page.keyboard.type(text[:500])
+
+    async def human_key(self, key: str) -> None:
+        if key not in self.HUMAN_KEYS:
+            raise ValueError(f"key '{key}' is not allowed")
+        await self.page.keyboard.press(key)
+
     async def identify(self, target: Target, attr: str) -> str | None:
         """If the target resolves to exactly one element, return that element's `attr` (else None).
         The recorder uses this to prove a locator hits the very element the agent acted on."""

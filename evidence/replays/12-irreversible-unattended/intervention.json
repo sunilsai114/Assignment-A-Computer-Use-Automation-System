@@ -1,0 +1,17 @@
+{
+  "id": "iv-2ddbb246",
+  "run_id": "run-4a03c44f",
+  "capability_id": "memberserv.open_subaccount",
+  "step_id": "submit_application",
+  "reason": "step 'submit_application' is irreversible: a human must approve it",
+  "url": "http://127.0.0.1:8010/heritage/",
+  "screenshot": "intervention-submit_application.png",
+  "kind": "approval",
+  "evidence_dir": ".\\run-4a03c44f",
+  "state": "open",
+  "claimed_by": null,
+  "decision": null,
+  "created_at": "2026-09-24T02:27:04.573+00:00",
+  "control_log": [],
+  "human_actions": []
+}

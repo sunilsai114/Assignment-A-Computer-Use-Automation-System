@@ -70,8 +70,9 @@ class Replayer:
         self.interventions = controller.store if controller else InterventionStore(self.runs_dir)
 
     # ───────────────────────── public entry ─────────────────────────
-    async def run(self, cap: Capability, inputs: dict, variant: str | None = None) -> ReplayResult:
-        run_id = f"run-{uuid.uuid4().hex[:8]}"
+    async def run(self, cap: Capability, inputs: dict, variant: str | None = None,
+                  run_id: str | None = None) -> ReplayResult:
+        run_id = run_id or f"run-{uuid.uuid4().hex[:8]}"
         rec = EvidenceRecorder(self.runs_dir, run_id, self.policy.redactor)
         st = _Run(cap, {}, rec, run_id)
         try:

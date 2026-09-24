@@ -17,3 +17,6 @@ testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 include = ["cua*", "mock_app*"]
+
+[tool.setuptools.package-data]
+"cua.console" = ["static/*"]

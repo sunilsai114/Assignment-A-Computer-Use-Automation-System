@@ -1,0 +1,37 @@
+{
+  "id": "iv-3e3b225e",
+  "run_id": "run-39607df1",
+  "capability_id": "memberserv.open_subaccount",
+  "step_id": "submit_application",
+  "reason": "step 'submit_application' is irreversible: a human must approve it",
+  "url": "http://127.0.0.1:8010/heritage/",
+  "screenshot": "intervention-submit_application.png",
+  "kind": "approval",
+  "evidence_dir": ".\\run-39607df1",
+  "state": "resolved",
+  "claimed_by": null,
+  "decision": {
+    "action": "approve",
+    "operator": "ops.reviewer",
+    "note": "member confirmed the application by phone",
+    "ts": "2026-09-24T02:27:12.008+00:00"
+  },
+  "created_at": "2026-09-24T02:27:11.598+00:00",
+  "control_log": [
+    {
+      "ts": "2026-09-24T02:27:11.617+00:00",
+      "from": "AUTOMATION",
+      "to": "PAUSED",
+      "holder": "nobody",
+      "why": "approval requested: step 'submit_application' is irreversible: a human must approve it"
+    },
+    {
+      "ts": "2026-09-24T02:27:12.008+00:00",
+      "from": "PAUSED",
+      "to": "AUTOMATION",
+      "holder": "automation",
+      "why": "approved: automation will perform the step"
+    }
+  ],
+  "human_actions": []
+}

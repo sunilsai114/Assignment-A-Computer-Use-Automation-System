@@ -1,0 +1,19 @@
+{
+  "status": "SUCCESS",
+  "capability_id": "memberserv.lookup_member",
+  "capability_version": "1.0.0",
+  "variant": "nova",
+  "run_id": "run-cd655b05",
+  "started_at": "2026-09-24T02:26:57.683246Z",
+  "duration_ms": 3368,
+  "steps_executed": 6,
+  "outputs": {
+    "savings_balance": "4821.37",
+    "member_name": "\u25cf\u25cf\u25cf\u25cf"
+  },
+  "outcome": null,
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-cd655b05"
+}

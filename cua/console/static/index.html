@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mission Control</title>
+<style>
+:root{
+  --bg:#060a14;--bg2:#0a1120;--panel:rgba(17,26,46,.72);--panel-solid:#101a2e;--line:rgba(120,150,210,.16);--line-strong:rgba(120,150,210,.3);
+  --text:#e7ecf7;--muted:#8e9bb8;--faint:#5d6a86;--accent:#22d3ee;--accent2:#a78bfa;
+  --ok:#34d399;--info:#60a5fa;--warn:#fbbf24;--bad:#f87171;--glow:0 0 0 1px rgba(34,211,238,.25),0 8px 30px rgba(34,211,238,.08);
+  --mono:ui-monospace,"Cascadia Code","SF Mono",Consolas,monospace;--sans:ui-sans-serif,"Segoe UI",system-ui,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#eef2f8;--bg2:#e4eaf4;--panel:rgba(255,255,255,.85);--panel-solid:#fff;--line:rgba(30,50,90,.12);--line-strong:rgba(30,50,90,.24);
+  --text:#0f1b33;--muted:#4f5d7a;--faint:#7c89a3;--accent:#0891b2;--accent2:#7c3aed;
+  --ok:#059669;--info:#2563eb;--warn:#b45309;--bad:#dc2626;--glow:0 0 0 1px rgba(8,145,178,.25),0 8px 24px rgba(8,145,178,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(1200px 600px at 80% -10%,rgba(167,139,250,.10),transparent 60%),
+  radial-gradient(900px 500px at -10% 110%,rgba(34,211,238,.08),transparent 60%),var(--bg);
+  background-attachment:fixed;color:var(--text);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+button,input,select{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+aside{border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px;
+  background:linear-gradient(180deg,rgba(10,17,32,.6),rgba(6,10,20,.2))}
+:root[data-theme="light"] aside{background:rgba(255,255,255,.5)}
+.brand{display:flex;gap:10px;align-items:center;padding:0 6px}
+.brand .mark{width:30px;height:30px;border-radius:9px;background:conic-gradient(from 200deg,var(--accent),var(--accent2),var(--accent));
+  box-shadow:0 0 18px rgba(34,211,238,.35);display:grid;place-items:center;color:#061018;font-weight:800}
+.brand b{display:block;letter-spacing:.14em;font-size:12px}.brand small{color:var(--muted);font-size:11px}
+nav{display:flex;flex-direction:column;gap:2px}
+nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--muted);font-weight:500}
+nav a:hover{background:var(--panel);color:var(--text)}
+nav a.on{background:var(--panel);color:var(--text);box-shadow:inset 2px 0 0 var(--accent)}
+nav .count{margin-left:auto;background:var(--warn);color:#1a1200;border-radius:999px;font-size:11px;font-weight:700;padding:0 7px;min-width:20px;text-align:center}
+.sys{margin-top:auto;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;padding:0 6px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:8px;background:var(--faint)}
+.dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)}.dot.bad{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+.theme{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer;color:var(--muted)}
+main{padding:26px 30px 60px;max-width:1280px;width:100%}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:600}
+.sub{color:var(--muted);margin:0 0 22px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;backdrop-filter:blur(10px)}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.02em}.kpi .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.1em}
+.card{cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s}
+.card:hover{transform:translateY(-2px);box-shadow:var(--glow);border-color:var(--line-strong)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
+.mono{font-family:var(--mono);font-size:12.5px}.muted{color:var(--muted)}.small{font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;letter-spacing:.04em;
+  border:1px solid currentColor;white-space:nowrap}
+.chip.soft{border-color:var(--line);color:var(--muted);font-weight:600}
+.s-SUCCESS,.s-completed,.s-approved,.s-safe,.s-high{color:var(--ok)}.s-BUSINESS_OUTCOME,.s-medium{color:var(--info)}
+.s-NEEDS_HUMAN,.s-needs_human,.s-PAUSED,.s-draft,.s-risky,.s-HUMAN{color:var(--warn)}.s-FAILED,.s-failed,.s-aborted,.s-irreversible,.s-low{color:var(--bad)}
+.s-RUNNING,.s-AUTOMATION{color:var(--accent)}
+.pulse::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:p 1.2s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.2}}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+td.mono,.nowrap{white-space:nowrap}tr.click{cursor:pointer}tr.click:hover td{background:rgba(120,150,210,.06)}
+.btn{border:1px solid var(--line-strong);background:var(--panel-solid);border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:600}
+.btn:hover{border-color:var(--accent)}.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#061018;border:0}
+.btn.danger{color:var(--bad)}.btn:disabled{opacity:.4;cursor:not-allowed}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);font-weight:600}
+input[type=text],input[type=number],select{background:var(--bg2);border:1px solid var(--line-strong);border-radius:9px;padding:8px 10px;min-width:0}
+input:focus,select:focus,.btn:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.steps{display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.step{border:1px solid var(--line);border-radius:11px;padding:12px 14px;position:relative;padding-left:48px}
+.step::before{counter-increment:s;content:counter(s);position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:7px;
+  background:var(--bg2);border:1px solid var(--line-strong);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--accent)}
+.loc{display:grid;grid-template-columns:110px 78px 1fr;gap:8px;font-size:12.5px;padding:6px 0;border-top:1px dashed var(--line);align-items:start}
+.loc .chip{justify-self:start}
+.bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:7px}.bar i{display:block;height:100%}
+.outcome{border-radius:14px;padding:18px 20px;border:1px solid currentColor;background:linear-gradient(135deg,rgba(255,255,255,.03),transparent)}
+.outcome h3{margin:0 0 6px;font-size:18px}
+.tl{display:flex;flex-direction:column}.ev{display:grid;grid-template-columns:92px 150px 1fr;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.ev .k{font-weight:700}.ev.recovery .k{color:var(--info)}.ev.failure .k,.ev.policy_refused .k{color:var(--bad)}.ev.needs_human .k,.ev.handoff_requested .k{color:var(--warn)}
+.ev.success .k,.ev.step_ok .k{color:var(--ok)}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.shots figure{margin:0}.shots img{width:100%;border-radius:9px;border:1px solid var(--line);cursor:zoom-in}.shots figcaption{font-size:11px;color:var(--muted)}
+.live{position:relative}.live img{width:100%;border-radius:11px;border:1px solid var(--line-strong);display:block}
+.live.drive img{cursor:crosshair;box-shadow:0 0 0 2px var(--warn)}
+.console{grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);align-items:start}.console>.panel:first-child{position:sticky;top:12px}
+@media (max-width:1100px){.console{grid-template-columns:1fr}.console>.panel:first-child{position:static}}
+.banner{border-radius:12px;padding:12px 14px;border:1px solid var(--warn);color:var(--warn);background:rgba(251,191,36,.07)}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font:12px/1.5 var(--mono);max-height:520px;margin:0}
+.err{color:var(--bad);min-height:1.4em;font-size:12.5px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}.tabs button{border:1px solid var(--line);background:none;border-radius:999px;padding:4px 12px;cursor:pointer;color:var(--muted)}
+.tabs button.on{border-color:var(--accent);color:var(--text)}
+dialog{border:1px solid var(--line-strong);border-radius:14px;background:var(--panel-solid);color:var(--text);padding:10px;max-width:92vw}
+dialog img{max-width:88vw;max-height:80vh;display:block}
+.empty{color:var(--muted);padding:26px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+@media (max-width:900px){.app{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}
+  nav{flex-direction:row;flex-wrap:wrap}.sys{margin:0}main{padding:18px 16px 50px}.g2,.g3,.g4{grid-template-columns:1fr}.ev{grid-template-columns:70px 1fr}.ev .t{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><div class="mark">◈</div><div><b>MISSION CONTROL</b><small>computer-use automation</small></div></div>
+    <nav id="nav">
+      <a href="#/overview" data-r="overview">◉ Overview</a>
+      <a href="#/capabilities" data-r="capabilities">▦ Capabilities</a>
+      <a href="#/runs" data-r="runs">↻ Runs</a>
+      <a href="#/interventions" data-r="interventions">✋ Interventions <span class="count" id="ivcount" hidden>0</span></a>
+      <a href="#/guardrails" data-r="guardrails">⛨ Guardrails</a>
+      <a href="#/agent" data-r="agent">⌘ Agent API</a>
+    </nav>
+    <div class="sys">
+      <span><span class="dot" id="d-bank"></span>Target app</span>
+      <span><span class="dot" id="d-browser"></span>Browser</span>
+      <button class="theme" id="theme" type="button" aria-label="Toggle light or dark theme">◐ Theme</button>
+    </div>
+  </aside>
+  <main id="main" aria-live="polite"></main>
+</div>
+<dialog id="zoom"><img id="zoomimg" alt="Enlarged screenshot"></dialog>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const main = $("#main");
+// Every piece of text goes through textContent: server data is never parsed as HTML.
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v; else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return el;
+}
+const chip = (label, cls, extra) => h("span", {class: `chip s-${cls ?? label} ${extra || ""}`}, label);
+const soft = t => h("span", {class: "chip soft"}, t);
+const panel = (...kids) => h("div", {class: "panel"}, ...kids);
+const ago = iso => { if (!iso) return ""; const s = (Date.now() - new Date(iso)) / 1000;
+  return s < 60 ? `${Math.max(1, s | 0)}s ago` : s < 3600 ? `${s / 60 | 0}m ago` : s < 86400 ? `${s / 3600 | 0}h ago` : new Date(iso).toLocaleString(); };
+const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+async function api(path, opts) {
+  const r = await fetch(path, opts && {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(opts)});
+  const body = r.headers.get("content-type")?.includes("json") ? await r.json() : null;
+  if (!r.ok) throw new Error(body?.detail || `${r.status} ${r.statusText}`);
+  return body;
+}
+const pretty = s => String(s).replaceAll("_", " ");
+const PLAIN = {SUCCESS: "Success", BUSINESS_OUTCOME: "Business outcome", NEEDS_HUMAN: "Needs a human", FAILED: "Failed",
+  RUNNING: "Running", PAUSED: "Paused for a human", completed: "Completed", needs_human: "Needs a human", failed: "Failed", aborted: "Aborted"};
+const statusChip = s => chip(PLAIN[s] || s, s, ["RUNNING", "PAUSED"].includes(s) ? "pulse" : "");
+
+// ── theme ──
+const setTheme = t => { document.documentElement.dataset.theme = t; store.set("theme", t); };
+setTheme(store.get("theme", "dark"));
+$("#theme").onclick = () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+
+// ── router ──
+let timer = null;
+const routes = {overview, capabilities, capability, runs, run, interventions, guardrails, agent};
+async function route() {
+  clearInterval(timer); timer = null; live.id = null;
+  const [name = "overview", arg] = location.hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
+  const key = name === "capabilities" && arg ? "capability" : name === "runs" && arg ? "run" : name;
+  document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.r === name));
+  try { await (routes[key] || overview)(arg); } catch (e) { main.replaceChildren(h("div", {class: "empty"}, `Could not load: ${e.message}`)); }
+  main.focus?.();
+}
+addEventListener("hashchange", route);
+async function heartbeat() {
+  try {
+    const o = await api("/api/overview");
+    $("#d-bank").className = "dot " + (o.bank_reachable ? "ok" : "bad");
+    $("#d-browser").className = "dot " + (o.browser ? "ok" : "bad");
+    const c = $("#ivcount"); c.hidden = !o.interventions; c.textContent = o.interventions;
+  } catch { $("#d-bank").className = "dot bad"; }
+}
+setInterval(heartbeat, 3000); heartbeat();
+
+// ── overview ──
+async function overview() {
+  const [o, rs] = await Promise.all([api("/api/overview"), api("/api/runs")]);
+  const count = s => rs.filter(r => r.status === s).length;
+  main.replaceChildren(
+    h("h1", {}, "Overview"), h("p", {class: "sub"}, `Target: ${o.base_url} · discovery by LLM, production by deterministic replay`),
+    h("div", {class: "grid g4"},
+      ...[["Approved capabilities", o.capabilities.approved, "ok"], ["Drafts awaiting review", o.capabilities.draft, "warn"],
+          ["Open interventions", o.interventions, o.interventions ? "warn" : "muted"], ["Live runs", o.live_runs, "accent"]]
+        .map(([l, v, c]) => panel(h("div", {class: "kpi"}, h("div", {class: "v", style: `color:var(--${c === "muted" ? "text" : c})`}, v), h("div", {class: "l"}, l))))),
+    h("div", {class: "grid g4", style: "margin-top:16px"},
+      ...["SUCCESS", "BUSINESS_OUTCOME", "NEEDS_HUMAN", "FAILED"].map(s => panel(h("div", {class: "kpi"},
+        h("div", {class: `v s-${s}`}, count(s)), h("div", {class: "l"}, PLAIN[s]))))),
+    h("div", {class: "panel", style: "margin-top:16px"}, h("h2", {}, "Recent runs"), runTable(rs.slice(0, 8))));
+}
+
+// ── capabilities ──
+async function capabilities() {
+  const d = await api("/api/capabilities");
+  const cards = d.capabilities.map(c => h("div", {class: "panel card", tabindex: 0, role: "link",
+      onclick: () => location.hash = `#/capabilities/${encodeURIComponent(c.id)}`,
+      onkeydown: e => e.key === "Enter" && (location.hash = `#/capabilities/${encodeURIComponent(c.id)}`)},
+    h("div", {class: "row between"}, chip(c.status, c.status), chip(`risk: ${c.max_risk}`, c.max_risk)),
+    h("h3", {style: "margin:12px 0 2px;font-size:16px"}, c.name),
+    h("div", {class: "mono muted"}, `${c.id} · v${c.version}`),
+    h("p", {class: "small muted", style: "min-height:3em"}, c.description),
+    h("div", {class: "row"}, ...c.variants.map(v => soft(`tenant: ${v}`)), soft(`${c.steps} steps`),
+      c.created_by.startsWith("disc-") ? soft("discovered by LLM") : soft("hand-authored"))));
+  main.replaceChildren(h("h1", {}, "Capabilities"),
+    h("p", {class: "sub"}, "Each artifact is a typed contract an agent can invoke. Drafts come from discovery and must be reviewed before production use."),
+    cards.length ? h("div", {class: "grid g3"}, ...cards) : h("div", {class: "empty"}, "No capabilities yet. Run `cua discover`."),
+    ...Object.entries(d.invalid).map(([f, e]) => h("div", {class: "banner", style: "margin-top:12px"}, `Invalid artifact ${f}: ${e}`)));
+}
+
+function contractTable(title, rows, cols) {
+  return panel(h("h2", {}, title), rows.length ? h("table", {}, h("tr", {}, ...cols.map(c => h("th", {}, c[0]))),
+    ...rows.map(r => h("tr", {}, ...cols.map(c => h("td", {class: c[2] || ""}, c[1](r)))))) : h("div", {class: "muted small"}, "none"));
+}
+
+async function capability(id) {
+  const d = await api(`/api/capabilities/${encodeURIComponent(id)}`);
+  const s = d.summary, a = d.artifact;
+  const form = runForm(s);
+  const stepCard = st => h("div", {class: "step"},
+    h("div", {class: "row between"}, h("b", {}, st.intent), h("span", {class: "row"}, soft(st.action), chip(st.risk || "safe", st.risk || "safe"))),
+    h("div", {class: "mono muted small"}, st.id,
+      st.value ? ` · value ← ${st.value.param ? "{" + st.value.param + "}" : st.value.secret_env ? "secret:" + st.value.secret_env : JSON.stringify(st.value.literal)}` : "",
+      st.output ? ` · output → ${st.output}` : ""),
+    ...(st.target ? [h("div", {class: "small muted", style: "margin-top:6px"}, st.target.frame_path?.length ? `frame: ${st.target.frame_path.join(" › ")}` : "top document"),
+      ...st.target.locators.map(l => h("div", {class: "loc"}, h("span", {class: "mono"}, l.kind), chip(l.robustness, l.robustness),
+        h("span", {}, h("span", {class: "mono"}, JSON.stringify(l.params)), h("div", {class: "muted small"}, l.why))))] : []),
+    ...(st.post || []).map(c => h("div", {class: "small", style: "margin-top:6px"}, "✓ checkpoint: ", h("span", {class: "mono"}, cond(c)))));
+  main.replaceChildren(
+    h("a", {href: "#/capabilities", class: "small"}, "← Capabilities"),
+    h("div", {class: "row between", style: "margin:8px 0 4px"}, h("h1", {}, s.name), h("div", {class: "row"}, chip(s.status, s.status), chip(`risk: ${s.max_risk}`, s.max_risk))),
+    h("p", {class: "sub mono"}, `${s.id} · v${s.version} · app ${s.app} · ${s.created_by}`),
+    s.status !== "approved" ? h("div", {class: "banner", style: "margin-bottom:16px"},
+      "Draft: recorded from one discovery run. Review the steps and add business outcomes before approving it for unattended use.") : "",
+    h("div", {class: "grid g2"},
+      h("div", {class: "grid"},
+        contractTable("Inputs", s.inputs, [["name", r => r.name, "mono"], ["type", r => r.enum ? `enum (${r.enum.join(", ")})` : r.type], ["", r => r.required ? "required" : "optional", "muted small"]]),
+        contractTable("Outputs", s.outputs, [["name", r => r.name, "mono"], ["type", r => r.type], ["", r => r.sensitive ? "sensitive: masked in logs" : "", "muted small"]]),
+        contractTable("Business outcomes", s.outcomes, [["code", r => r.code, "mono"], ["meaning", r => r.description]])),
+      panel(h("h2", {}, "Invoke"), form)),
+    h("div", {class: "panel", style: "margin-top:16px"}, h("h2", {}, `Flow · ${a.steps.length} steps`),
+      h("div", {class: "small muted", style: "margin-bottom:10px"}, "Locators are tried top to bottom; the first that matches exactly one control wins. A fallback match is reported as possible UI drift."),
+      h("div", {class: "steps"}, ...a.steps.map(stepCard)),
+      h("p", {class: "small", style: "margin-top:12px"}, "Success when: ", h("span", {class: "mono"}, cond(a.success)))),
+    a.auth ? h("div", {class: "panel", style: "margin-top:16px"}, h("h2", {}, "Sign-in (runs only when the session is missing or expired)"),
+      h("div", {class: "small muted"}, `Credentials come from environment variables at run time and are never stored: ${a.auth.steps.filter(x => x.value?.secret_env).map(x => x.value.secret_env).join(", ")}`),
+      h("div", {class: "small", style: "margin-top:6px"}, "Signed in when: ", h("span", {class: "mono"}, cond(a.auth.logged_in_when)),
+        a.auth.resume_from ? ` · then resume at ${a.auth.resume_from}` : " · then restart the flow")) : "",
+    (a.interstitials || []).length ? contractTable("Known interruptions (dismissed automatically)", a.interstitials,
+      [["name", r => r.name, "mono"], ["detected by", r => cond(r.detected_by), "mono"], ["then", r => r.resume_from ? `resume at ${r.resume_from}` : "retry the step"]]) : "",
+    (a.variants || []).length ? contractTable("Tenant variants", a.variants,
+      [["tenant", r => r.variant, "mono"], ["overrides", r => `${Object.keys(r.targets || {}).length} targets, ${Object.keys(r.values || {}).length} values, ${(r.skip_steps || []).length} skipped, ${Object.keys(r.outcome_detectors || {}).length} outcome detectors`], ["note", r => r.note || ""]]) : "");
+}
+function cond(c) {
+  if (!c) return "";
+  const where = c.frame ? ` in frame ${c.frame}` : "";
+  if (c.kind === "text_present") return `text "${c.text}"${where}`;
+  if (c.kind === "text_absent") return `no text "${c.text}"${where}`;
+  if (c.kind === "url_matches") return `url ~ /${c.pattern}/`;
+  if (c.kind === "all_of" || c.kind === "any_of") return c.conditions.map(cond).join(c.kind === "all_of" ? " AND " : " OR ");
+  return c.kind;
+}
+function runForm(s) {
+  const fields = s.inputs.map(p => {
+    const id = `in-${p.name}`;
+    const input = p.enum ? h("select", {id, name: p.name}, ...p.enum.map(o => h("option", {}, o)))
+      : h("input", {id, name: p.name, type: "text", inputmode: p.type === "money" || p.type === "int" ? "decimal" : null,
+          placeholder: p.type === "money" ? "0.00" : p.pattern ? `pattern ${p.pattern}` : "", required: p.required, value: p.default ?? ""});
+    return h("label", {class: "f", for: id}, `${p.name} · ${p.type}`, input);
+  });
+  const variant = h("select", {id: "in-variant"}, ...s.variants.map(v => h("option", {}, v)));
+  const attended = h("input", {type: "checkbox", id: "in-attended", checked: s.approval_steps.length > 0});
+  const draft = h("input", {type: "checkbox", id: "in-draft"});
+  const err = h("div", {class: "err", role: "alert"});
+  const go = h("button", {class: "btn primary", type: "submit"}, "▶ Run replay");
+  const f = h("form", {class: "grid", onsubmit: async e => {
+    e.preventDefault(); err.textContent = ""; go.disabled = true;
+    const inputs = Object.fromEntries(s.inputs.map(p => [p.name, $(`#in-${p.name}`).value]).filter(([, v]) => v !== ""));
+    try {
+      const r = await api(`/api/capabilities/${encodeURIComponent(s.id)}/invoke`, {inputs, variant: variant.value, attended: attended.checked, allow_draft: draft.checked});
+      location.hash = `#/runs/${r.run_id}`;
+    } catch (x) { err.textContent = x.message; go.disabled = false; }
+  }}, ...fields, h("label", {class: "f", for: "in-variant"}, "tenant variant", variant),
+    h("label", {class: "row small"}, attended, "Attended: pause for an operator instead of stopping"),
+    s.status !== "approved" ? h("label", {class: "row small"}, draft, "Allow draft (review/testing only)") : "",
+    s.approval_steps.length ? h("div", {class: "small muted"}, `Needs human approval at: ${s.approval_steps.join(", ")}`) : "",
+    go, err);
+  return f;
+}
+
+// ── runs ──
+function runTable(rs) {
+  if (!rs.length) return h("div", {class: "empty"}, "No runs yet.");
+  return h("table", {}, h("tr", {}, ...["status", "run", "capability / goal", "detail", "when"].map(t => h("th", {}, t))),
+    ...rs.map(r => h("tr", {class: "click", tabindex: 0, onclick: () => location.hash = `#/runs/${r.id}`, onkeydown: e => e.key === "Enter" && (location.hash = `#/runs/${r.id}`)},
+      h("td", {}, statusChip(r.status)), h("td", {class: "mono"}, r.id, h("div", {class: "muted small"}, r.kind)),
+      h("td", {}, h("span", {class: r.kind === "replay" ? "mono" : ""}, r.capability), r.variant ? h("div", {class: "muted small"}, `tenant ${r.variant}${r.version ? " · v" + r.version : ""}`) : ""),
+      h("td", {class: "mono small"}, r.detail || "", r.duration_ms != null ? h("div", {class: "muted"}, `${(r.duration_ms / 1000).toFixed(1)}s`) : ""),
+      h("td", {class: "muted small"}, ago(r.started)))));
+}
+async function runs() {
+  const rs = await api("/api/runs");
+  let filter = store.get("runfilter", "all");
+  const body = h("div", {});
+  const tabs = h("div", {class: "tabs", role: "tablist"});
+  const draw = () => {
+    tabs.replaceChildren(...["all", "SUCCESS", "BUSINESS_OUTCOME", "NEEDS_HUMAN", "FAILED", "discovery"].map(t =>
+      h("button", {class: t === filter ? "on" : "", role: "tab", "aria-selected": t === filter, onclick: () => { filter = t; store.set("runfilter", t); draw(); }}, PLAIN[t] || t)));
+    body.replaceChildren(runTable(rs.filter(r => filter === "all" || r.status === filter || r.kind === filter)));
+  };
+  draw();
+  main.replaceChildren(h("h1", {}, "Runs"), h("p", {class: "sub"}, "Every replay and discovery run, with its evidence."), tabs, panel(body));
+}
+
+function outcomePanel(res, d) {
+  if (!res) return d.discovery ? discoveryPanel(d.discovery) : "";
+  const s = res.status;
+  const box = (title, ...kids) => h("div", {class: `outcome s-${s}`}, h("h3", {}, title), h("div", {style: "color:var(--text)"}, ...kids));
+  if (s === "SUCCESS") return box("✓ Completed and verified",
+    Object.keys(res.outputs).length ? h("table", {}, ...Object.entries(res.outputs).map(([k, v]) => h("tr", {}, h("td", {class: "mono"}, k), h("td", {class: "mono"}, v))))
+      : h("div", {class: "muted"}, "The success checkpoint was verified; this capability declares no outputs."));
+  if (s === "BUSINESS_OUTCOME") return box(`◆ Business outcome: ${pretty(res.outcome.code)}`, h("div", {}, res.outcome.description),
+    h("div", {class: "muted small"}, `Detected at step ${res.outcome.step_id}. This is a legitimate answer for the caller, not an error.`));
+  if (s === "NEEDS_HUMAN") return box("✋ Stopped: a human is needed", h("div", {}, `Intervention ${res.intervention_id}. Nothing irreversible was performed.`));
+  const f = res.failure;
+  return box(`✕ Failed${f.step_id ? " at step " + f.step_id : ""} · ${pretty(f.category)}`,
+    h("div", {class: "grid g2", style: "margin-top:6px"}, h("div", {}, h("div", {class: "muted small"}, "Expected"), h("div", {class: "mono small"}, f.expected)),
+      h("div", {}, h("div", {class: "muted small"}, "Observed"), h("div", {class: "mono small"}, f.observed))),
+    f.evidence_ref ? h("div", {class: "small muted", style: "margin-top:8px"}, `Evidence: ${f.evidence_ref}`) : "");
+}
+function discoveryPanel(dc) {
+  return h("div", {class: `outcome s-${dc.status}`}, h("h3", {}, `Discovery ${pretty(dc.status)} · ${dc.turns} turns`),
+    h("div", {style: "color:var(--text)"}, h("div", {}, dc.goal), h("div", {class: "muted small"}, `model ${dc.model} · ${dc.reason}`),
+      ...(dc.notes || []).map(n => h("div", {class: "small"}, "note: ", n))));
+}
+function timeline(events) {
+  const detail = e => { const skip = new Set(["ts", "event", "screen"]);
+    return Object.entries(e).filter(([k]) => !skip.has(k)).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : v}`).join("  "); };
+  return h("div", {class: "tl"}, ...events.map(e => h("div", {class: `ev ${e.event}`},
+    h("span", {class: "muted mono t"}, e.ts.slice(11, 23)), h("span", {class: "k mono"}, e.event), h("span", {class: "mono small", style: "word-break:break-word"}, detail(e)))));
+}
+function gallery(id, files) {
+  const pngs = files.filter(f => f.endsWith(".png"));
+  if (!pngs.length) return h("div", {class: "muted small"}, "No screenshots (captured on failures, pauses and discovery turns).");
+  return h("div", {class: "shots"}, ...pngs.map(f => h("figure", {},
+    h("img", {src: `/api/runs/${id}/files/${f}`, alt: `Screenshot ${f}`, loading: "lazy", onclick: () => { $("#zoomimg").src = `/api/runs/${id}/files/${f}`; $("#zoom").showModal(); }}),
+    h("figcaption", {}, f))));
+}
+$("#zoom").onclick = () => $("#zoom").close();
+
+function operatorPanel(d) {
+  const c = d.control, iv = c?.intervention;
+  if (!iv) return "";
+  const me = store.get("operator", "");
+  const opIn = h("input", {type: "text", id: "opname", value: me, placeholder: "your name", autocomplete: "name", "aria-label": "Operator name",
+    oninput: e => store.set("operator", e.target.value)});
+  const err = h("div", {class: "err", role: "alert", id: "operr"});
+  const act = async (action, extra = {}) => {
+    err.textContent = "";
+    try { await api(`/api/runs/${d.id}/operator/${action}`, {operator: opIn.value, ...extra}); refreshRun(d.id); }
+    catch (x) { err.textContent = x.message; }
+  };
+  const mine = c.state === "HUMAN" && c.holder === opIn.value.trim();
+  const typeIn = h("input", {type: "text", placeholder: "type into the focused field", "aria-label": "Text to type"});
+  const human = async body => { err.textContent = ""; try { await api(`/api/runs/${d.id}/human`, {operator: opIn.value, ...body}); refreshLive(d.id); } catch (x) { err.textContent = x.message; } };
+  return h("div", {class: "panel", style: "border-color:var(--warn)"},
+    h("div", {class: "row between"}, h("h2", {style: "margin:0"}, "Operator"), h("span", {class: "row"}, "control: ", chip(c.state, c.state, c.state !== "AUTOMATION" ? "pulse" : ""), h("span", {class: "muted small"}, `held by ${c.holder}`))),
+    h("p", {class: "small"}, h("b", {}, iv.kind === "approval" ? "Approval needed: " : "Automation is stuck: "), iv.reason),
+    h("div", {class: "small muted"}, `step ${iv.step_id || "-"} · ${iv.url}`),
+    h("div", {class: "grid", style: "margin-top:12px"},
+      h("label", {class: "f", for: "opname"}, "Operator name (every decision is attributed)", opIn),
+      h("div", {class: "row"},
+        h("button", {class: "btn primary", disabled: c.state !== "PAUSED", onclick: () => act("claim")}, "Take control"),
+        h("button", {class: "btn", disabled: iv.kind !== "approval", onclick: () => act("approve", {note: "approved in Mission Control"})}, "Approve step"),
+        h("button", {class: "btn", onclick: () => act("resume", {mode: "retry"})}, "Hand back · retry"),
+        h("button", {class: "btn", disabled: c.state !== "HUMAN", onclick: () => act("resume", {mode: "skip"})}, "Hand back · I did it"),
+        h("button", {class: "btn danger", onclick: () => confirm("Abort this run?") && act("abort", {note: "aborted in Mission Control"})}, "Abort")),
+      mine ? h("div", {class: "banner"}, "You hold the session. Click on the live view to click in the app; type below. Automation is locked out until you hand back.") : "",
+      mine ? h("div", {class: "row"}, typeIn, h("button", {class: "btn", onclick: () => { human({text: typeIn.value}); typeIn.value = ""; }}, "Type"),
+        ...["Tab", "Enter", "Backspace"].map(k => h("button", {class: "btn", onclick: () => human({key: k})}, k))) : "",
+      err,
+      iv.human_actions.length ? h("div", {}, h("h2", {}, "Recorded human actions"), ...iv.human_actions.map(a => h("div", {class: "mono small"}, `${a.ts.slice(11, 19)} ${a.operator}: ${a.kind} "${a.text || a.name || ""}"${a.value !== undefined ? " = " + a.value : ""}`))) : "",
+      h("div", {}, h("h2", {}, "Control log"), ...iv.control_log.map(e => h("div", {class: "small"}, h("span", {class: "mono muted"}, e.ts.slice(11, 19) + " "), chip(e.to, e.to), " ", e.why)))));
+}
+
+// One live image per run view, kept across re-renders. New frames are fetched as blobs and swapped in only
+// once loaded, so the element always has real dimensions when the operator clicks it.
+const live = {id: null, img: null, url: null, data: null, busy: false};
+const LIVE_WIDTH = 1100;  // the automation's viewport width: a safe fallback if the image is mid-swap
+const holdsSession = d => d?.control?.state === "HUMAN" && d.control.holder === (store.get("operator", "") || "").trim();
+function liveElement(id) {
+  if (live.id !== id) {
+    live.id = id;
+    live.img = h("img", {alt: "Live view of the browser session"});
+    live.img.addEventListener("click", async e => {
+      if (!holdsSession(live.data)) return;
+      const r = e.target.getBoundingClientRect(), k = (e.target.naturalWidth || LIVE_WIDTH) / r.width;
+      const err = $("#operr");
+      try {
+        await api(`/api/runs/${id}/human`, {operator: store.get("operator", ""), x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k});
+        if (err) err.textContent = "";
+        refreshLive(id); refreshRun(id);
+      } catch (x) { if (err) err.textContent = x.message; }
+    });
+    refreshLive(id);
+  }
+  return live.img;
+}
+async function refreshLive(id) {
+  if (live.id !== id || live.busy) return;
+  live.busy = true;
+  try {
+    const r = await fetch(`/api/runs/${id}/live.png?t=${Date.now()}`);
+    if (r.ok) {
+      const url = URL.createObjectURL(await r.blob());
+      await new Promise(ok => { const pre = new Image(); pre.onload = pre.onerror = ok; pre.src = url; });
+      if (live.id === id) { const old = live.url; live.url = url; live.img.src = url; if (old) setTimeout(() => URL.revokeObjectURL(old), 2000); }
+    }
+  } catch {} finally { live.busy = false; }
+}
+async function refreshRun(id) { if (location.hash === `#/runs/${id}`) await run(id, true); }
+const signature = d => JSON.stringify([d.status, d.live, d.control?.state, d.control?.holder,
+  d.control?.intervention?.human_actions?.length, d.events.length, d.files.length]);
+async function run(id, soft = false, pre = null) {
+  const d = pre || await api(`/api/runs/${id}`);
+  live.data = d;
+  const res = d.result;
+  const head = h("div", {},
+    h("a", {href: "#/runs", class: "small"}, "← Runs"),
+    h("div", {class: "row between", style: "margin:8px 0 4px"}, h("h1", {}, d.capability || d.discovery?.goal || id), statusChip(d.status)),
+    h("p", {class: "sub mono"}, `${id}${res ? ` · v${res.capability_version} · tenant ${res.variant} · ${(res.duration_ms / 1000).toFixed(1)}s · ${res.steps_executed} steps` : ""}${d.attended ? " · attended" : ""}`));
+  const mine = holdsSession(d);
+  const liveView = d.live ? panel(h("h2", {}, mine ? "Live session · you are driving" : "Live session"),
+    h("div", {class: `live ${mine ? "drive" : ""}`}, liveElement(id))) : "";
+  const recov = res?.recoveries?.length ? panel(h("h2", {}, "Recovered automatically"), ...res.recoveries.map(r => h("div", {class: "row small", style: "padding:4px 0"}, chip(pretty(r.kind), "BUSINESS_OUTCOME"), h("span", {class: "mono muted"}, r.step_id), r.detail))) : "";
+  main.replaceChildren(head,
+    d.error ? h("div", {class: "banner"}, d.error) : "",
+    h("div", {class: "grid", style: "gap:16px"},
+      outcomePanel(res, d),
+      d.control?.intervention && liveView ? h("div", {class: "grid console"}, liveView, operatorPanel(d)) : [operatorPanel(d), liveView],
+      recov,
+      panel(h("h2", {}, "Evidence · screenshots"), gallery(id, d.files)),
+      panel(h("h2", {}, `Timeline · ${d.events.length} events`), timeline(d.events))));
+  if (!soft && (d.live || d.status === "RUNNING" || d.status === "PAUSED")) {
+    let last = signature(d);
+    timer = setInterval(async () => {
+      refreshLive(id);
+      const x = await api(`/api/runs/${id}`).catch(() => null);
+      if (!x) return;
+      live.data = x;
+      const typing = document.activeElement && ["INPUT", "SELECT"].includes(document.activeElement.tagName);
+      if (!x.live) { clearInterval(timer); timer = null; await run(id, true, x); return; }
+      if (signature(x) !== last && !typing) { last = signature(x); await run(id, true, x); }  // redraw only on change
+    }, 1500);
+  }
+}
+
+// ── interventions ──
+async function interventions() {
+  const ivs = await api("/api/interventions");
+  main.replaceChildren(h("h1", {}, "Interventions"),
+    h("p", {class: "sub"}, "Runs paused on their live session, waiting for a person. Only one party controls a session at a time."),
+    ivs.length ? panel(h("table", {}, h("tr", {}, ...["kind", "capability", "why", "control", "since"].map(t => h("th", {}, t))),
+      ...ivs.map(i => h("tr", {class: "click", tabindex: 0, onclick: () => location.hash = `#/runs/${i.run_id}`},
+        h("td", {}, chip(i.kind === "approval" ? "approval" : "stuck", "NEEDS_HUMAN")), h("td", {class: "mono"}, i.capability, h("div", {class: "muted small"}, `step ${i.step_id || "-"}`)),
+        h("td", {class: "small"}, i.reason), h("td", {}, chip(i.state, i.state), h("div", {class: "muted small"}, i.holder)), h("td", {class: "muted small"}, ago(i.created_at))))))
+      : h("div", {class: "empty"}, "Nothing is waiting for a human."));
+  timer = setInterval(() => location.hash === "#/interventions" && interventions(), 3000);
+}
+
+// ── guardrails ──
+async function guardrails() {
+  const p = await api("/api/policy");
+  const list = (title, items, note) => panel(h("h2", {}, title), note ? h("div", {class: "small muted", style: "margin-bottom:8px"}, note) : "",
+    h("div", {class: "row"}, ...items.map(x => h("span", {class: "chip soft mono"}, x))));
+  main.replaceChildren(h("h1", {}, "Guardrails"), h("p", {class: "sub"}, "The active policy (config/policy.yaml). Default-deny: anything not listed is blocked."),
+    h("div", {class: "grid g2"},
+      list("Allowed hosts", p.allowed_hosts, "Checked on every browser request, not just on navigation steps."),
+      list("Allowed paths", p.allowed_paths, "Admin/fault-injection routes are deliberately absent."),
+      list("Allowed action types", p.allowed_actions),
+      list("Irreversible markers", p.irreversible_markers, `A step matching any of these is irreversible even if mislabelled. Policy: ${p.irreversible_policy}.`),
+      list("Redaction rules", Object.keys(p.redaction), "Applied to every log, artifact and evidence file. Evidence screenshots also blank table values."),
+      panel(h("h2", {}, "Limits"), h("table", {}, ...Object.entries(p.limits).map(([k, v]) => h("tr", {}, h("td", {class: "mono"}, k), h("td", {class: "mono"}, v)))))));
+}
+
+// ── agent API ──
+async function agent() {
+  const tools = await api("/api/tools");
+  const ex = tools[0];
+  const sample = ex ? Object.fromEntries(Object.entries(ex.parameters.properties).map(([k, v]) => [k, v.enum ? v.enum[0] : k === "member_id" ? "12345" : v.type === "string" && /USD/.test(v.description) ? "50" : "…"])) : {};
+  main.replaceChildren(h("h1", {}, "Agent API"),
+    h("p", {class: "sub"}, "Approved capabilities, exposed as function-calling tools. An agent discovers them here and calls one by name with typed arguments; it gets back the four-way result contract. Drafts are never offered."),
+    h("div", {class: "grid g2"},
+      panel(h("h2", {}, "Discover"), h("pre", {}, "GET /api/tools")),
+      panel(h("h2", {}, "Invoke by name"), h("pre", {}, ex ? `POST /api/tools/${ex.name}\n${JSON.stringify(sample, null, 2)}` : "no approved capabilities"))),
+    h("div", {class: "panel", style: "margin-top:16px"}, h("h2", {}, `Tool definitions · ${tools.length}`), h("pre", {}, JSON.stringify(tools, null, 2))));
+}
+
+route();
+</script>
+</body>
+</html>

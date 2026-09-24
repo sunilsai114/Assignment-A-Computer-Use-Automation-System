@@ -1,0 +1,18 @@
+{
+  "status": "SUCCESS",
+  "capability_id": "memberserv.lookup_member_discovered",
+  "capability_version": "0.1.0",
+  "variant": "heritage",
+  "run_id": "run-9d923bbd",
+  "started_at": "2026-09-24T02:25:43.113342Z",
+  "duration_ms": 2872,
+  "steps_executed": 4,
+  "outputs": {
+    "savings_balance": "15300.00"
+  },
+  "outcome": null,
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-9d923bbd"
+}

@@ -1,0 +1,32 @@
+{
+  "status": "SUCCESS",
+  "capability_id": "memberserv.lookup_member",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-9d06bc79",
+  "started_at": "2026-09-24T02:26:10.880381Z",
+  "duration_ms": 12860,
+  "steps_executed": 8,
+  "outputs": {
+    "savings_balance": "4821.37",
+    "member_name": "\u25cf\u25cf\u25cf\u25cf"
+  },
+  "outcome": null,
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [
+    {
+      "kind": "retry_transient",
+      "step_id": "open_inquiry",
+      "detail": "page took 3255ms to reach the expected state",
+      "attempt": 1
+    },
+    {
+      "kind": "retry_transient",
+      "step_id": "submit_search",
+      "detail": "page took 3252ms to reach the expected state",
+      "attempt": 1
+    }
+  ],
+  "evidence_dir": ".\\run-9d06bc79"
+}

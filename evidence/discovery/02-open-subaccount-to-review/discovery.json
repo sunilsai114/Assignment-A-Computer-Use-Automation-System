@@ -1,0 +1,10 @@
+{
+  "status": "completed",
+  "reason": "Successfully navigated to the review screen for opening a new Savings sub-account for member 12345 with a $50 opening deposit and 'Rainy day' nickname.",
+  "goal": "Open a new Savings sub-account for member 12345 with an opening deposit of 50 and nickname Rainy day, and reach the review screen",
+  "model": "gemini-3.5-flash-lite",
+  "turns": 11,
+  "notes": [],
+  "intervention_id": null,
+  "outputs": {}
+}

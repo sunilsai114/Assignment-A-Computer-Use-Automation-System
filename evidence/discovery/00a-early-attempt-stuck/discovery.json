@@ -1,0 +1,10 @@
+{
+  "status": "needs_human",
+  "reason": "repeating the same action on the same screen without progress",
+  "goal": "Look up member 12345 in Heritage MemberServ and read their current savings balance",
+  "model": "gemini-3.5-flash-lite",
+  "turns": 4,
+  "notes": [],
+  "intervention_id": "iv-35e9c748",
+  "outputs": {}
+}

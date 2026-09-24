@@ -1,0 +1,14 @@
+{"ts": "2026-09-24T02:25:50.652+00:00", "event": "run_start", "capability": "memberserv.lookup_member", "version": "1.0.0", "variant": "heritage", "inputs": {"member_id": "99999"}}
+{"ts": "2026-09-24T02:25:50.652+00:00", "event": "step_start", "step": "open_app", "intent": "Open the MemberServ home frameset", "action": "navigate", "risk": "safe", "value": "/heritage/"}
+{"ts": "2026-09-24T02:25:50.953+00:00", "event": "step_ok", "step": "open_app"}
+{"ts": "2026-09-24T02:25:50.954+00:00", "event": "step_start", "step": "open_inquiry", "intent": "Open Member Inquiry from the left nav", "action": "click", "risk": "safe", "value": null}
+{"ts": "2026-09-24T02:25:52.819+00:00", "event": "signed_in", "step": "open_inquiry"}
+{"ts": "2026-09-24T02:25:52.820+00:00", "event": "step_start", "step": "open_app", "intent": "Open the MemberServ home frameset", "action": "navigate", "risk": "safe", "value": "/heritage/"}
+{"ts": "2026-09-24T02:25:53.066+00:00", "event": "step_ok", "step": "open_app"}
+{"ts": "2026-09-24T02:25:53.067+00:00", "event": "step_start", "step": "open_inquiry", "intent": "Open Member Inquiry from the left nav", "action": "click", "risk": "safe", "value": null}
+{"ts": "2026-09-24T02:25:53.428+00:00", "event": "step_ok", "step": "open_inquiry"}
+{"ts": "2026-09-24T02:25:53.429+00:00", "event": "step_start", "step": "enter_member", "intent": "Type the member number", "action": "type", "risk": "safe", "value": "99999"}
+{"ts": "2026-09-24T02:25:53.673+00:00", "event": "step_ok", "step": "enter_member"}
+{"ts": "2026-09-24T02:25:53.674+00:00", "event": "step_start", "step": "submit_search", "intent": "Submit the search", "action": "click", "risk": "safe", "value": null}
+{"ts": "2026-09-24T02:25:53.904+00:00", "event": "business_outcome", "code": "permission_denied", "step": "submit_search"}
+{"ts": "2026-09-24T02:25:53.905+00:00", "event": "run_end", "status": "BUSINESS_OUTCOME"}

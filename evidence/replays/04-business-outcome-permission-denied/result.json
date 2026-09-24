@@ -1,0 +1,21 @@
+{
+  "status": "BUSINESS_OUTCOME",
+  "capability_id": "memberserv.lookup_member",
+  "capability_version": "1.0.0",
+  "variant": "heritage",
+  "run_id": "run-aab6471f",
+  "started_at": "2026-09-24T02:25:53.905047Z",
+  "duration_ms": 3253,
+  "steps_executed": 6,
+  "outputs": {},
+  "outcome": {
+    "code": "permission_denied",
+    "description": "Operator may not view this record.",
+    "data": {},
+    "step_id": "submit_search"
+  },
+  "failure": null,
+  "intervention_id": null,
+  "recoveries": [],
+  "evidence_dir": ".\\run-aab6471f"
+}
