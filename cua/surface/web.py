@@ -106,7 +106,8 @@ class WebSurface:
         parts = []
         for f in frames:
             try:
-                parts.append(await f.locator("body").inner_text(timeout=1000))
+                # evaluate, not locator("body"): a frameset has no <body> and locator() would wait out its timeout
+                parts.append(await f.evaluate("document.body ? document.body.innerText : ''"))
             except PlaywrightError:
                 pass  # frame mid-navigation; the caller polls
         return "\n".join(parts)
