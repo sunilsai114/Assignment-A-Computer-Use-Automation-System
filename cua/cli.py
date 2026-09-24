@@ -19,7 +19,14 @@ def doctor() -> None:
         typer.echo(f"browser: FAILED ({e}); run `playwright install chromium`")
 
 
-for name in ("discover", "replay", "operator", "list", "mock-app"):
+@app.command("mock-app")
+def mock_app(port: int = 8010) -> None:
+    """Serve the mock bank (Heritage CU legacy + Nova Bank) on localhost."""
+    import uvicorn
+    uvicorn.run("mock_app.app:app", host="127.0.0.1", port=port, log_level="warning")
+
+
+for name in ("discover", "replay", "operator", "list"):
     app.command(name)(lambda: typer.echo("not implemented yet"))  # filled in later steps
 
 if __name__ == "__main__":
