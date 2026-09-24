@@ -1,0 +1,24 @@
+# Default-deny: anything not listed here is blocked.
+allowed_hosts: ["127.0.0.1", "localhost"]
+allowed_paths: ["/", "/heritage/*", "/nova/*", "/static/*"]
+allowed_actions: [navigate, click, type, select, read, wait, screenshot]
+
+# safe: run freely. risky: run but flag in evidence. irreversible: blocked until a human approves.
+risk:
+  safe: [navigate, read, wait, screenshot]
+  risky: [type, select, click]
+  irreversible_markers: ["close account", "submit transfer", "delete", "confirm transfer"]
+irreversible_policy: require_approval
+
+redact:
+  ssn: '\b\d{3}-\d{2}-\d{4}\b'
+  account_number: '\b\d{8,17}\b'
+  email: '[\w.+-]+@[\w-]+\.[\w.]+'
+  phone: '\b\(?\d{3}\)?[-. ]?\d{3}[-. ]\d{4}\b'
+  secret_field_names: [password, passwd, pin, token, api_key]
+
+limits:
+  max_steps: 25
+  run_timeout_s: 180
+  step_retries: 2
+  action_timeout_ms: 8000

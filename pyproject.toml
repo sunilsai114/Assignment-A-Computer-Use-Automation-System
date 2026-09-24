@@ -1,0 +1,19 @@
+[project]
+name = "cua"
+version = "0.1.0"
+description = "Computer-use automation: discover with an LLM, replay deterministically."
+requires-python = ">=3.11"
+dependencies = [
+  "playwright", "pydantic>=2", "pydantic-settings", "typer", "fastapi",
+  "uvicorn[standard]", "google-genai", "pyyaml", "httpx",
+]
+
+[project.scripts]
+cua = "cua.cli:app"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["cua*"]
